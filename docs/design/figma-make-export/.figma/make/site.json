@@ -1,0 +1,10 @@
+{
+  "description": "Create personalized children's stories with interactive chapters and visuals, tailored to specific age ranges, enhancing engagement and creativity.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
