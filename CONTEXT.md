@@ -15,7 +15,7 @@ A person, typically a child, for whom stories are created. Its birth date places
 _Avoid_: Child, kid, sub-account
 
 **Age Band**:
-One of a fixed set of non-overlapping age ranges that bounds what content is appropriate. A Story keeps the Age Band it was started in.
+One of a fixed set of non-overlapping age ranges (0–2, 3–5, 6–8, 9–12, 13–15, 16+) that bounds what content is appropriate and how long Parts and Stories are. A Story keeps the Age Band it was started in. The oldest band, 16+, is capped at young-adult content: Bardery never writes adult content, even for an adult's Profile.
 _Avoid_: Age group, age range
 
 ### Stories
@@ -45,7 +45,7 @@ A Part that concludes a Storyline and has no Choice. Steered by the app toward a
 _Avoid_: Finale, conclusion
 
 **Hero**:
-A character that a Story is about, belonging to one Profile. A Hero can star in later Stories and carries forward what happened in each earlier Story: in its most recently finished Storyline, or if none is finished, its most recently extended one.
+A character that a Story is about, belonging to one Profile. A Hero can star in later Stories and carries forward what happened in each earlier Story: in its most recently finished Storyline, or if none is finished, its most recently extended one. Its look follows the Age Band of the Story it appears in, so it grows older along with its Profile.
 _Avoid_: Protagonist, character (when meaning a Hero)
 
 **Story Language**:

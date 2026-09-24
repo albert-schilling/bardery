@@ -59,7 +59,7 @@ The glossary (`CONTEXT.md`) and ADR 0001 are the primary record; this list only 
 - Q28: Only a parent (in Parent settings) can delete a Story. A Hero survives while it stars in any remaining Story; its "from · …" label moves to the oldest remaining one. A Hero with no Stories left is deleted. Single Storylines can't be deleted in v1.
 - Q29: Online-only in v1.
 
-## Open product questions (asked, not yet answered)
+## Open product questions (answered in [session 2](2026-09-24-technical-session.md))
 
 **Q31 – Full set of Age Bands.** The user asked for bands below 3 and beyond 13. Proposal:
 
