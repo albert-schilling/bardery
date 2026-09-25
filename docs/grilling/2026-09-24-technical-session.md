@@ -1,6 +1,6 @@
 # Grilling session 2 — technical design (2026-09-24)
 
-Record of the second `/grill-with-docs` session. It closed session 1's open product questions (Q31–Q33) and settled the technical design (Q34–Q78). The design tree has no open branches; the next step is implementation, starting with the spikes below.
+Record of the second `/grill-with-docs` session. It closed session 1's open product questions (Q31–Q33) and settled the technical design (Q34–Q89; Q79–Q89 were added on 2026-09-25 and replace the single Expo codebase for native and web). The design tree has no open branches; the next step is implementation, starting with the spikes below.
 
 Where to find what:
 
@@ -10,6 +10,7 @@ Where to find what:
   - 0002 *Postgres is the only stateful backend*.
   - 0003 *tRPC instead of REST with OpenAPI*.
   - 0004 *Azure for hosting and all AI models*.
+  - 0005 *Separate web and native clients*.
 - [`docs/research/2026-09-24-azure-all-in.md`](../research/2026-09-24-azure-all-in.md): facts behind ADR 0004 (regions, model limits, prices, terms). It's a snapshot, so check the sources before relying on a number.
 - [Session 1](2026-09-23-product-session.md): product decisions Q1–Q30.
 
@@ -44,8 +45,23 @@ Answers below are final. Where an answer was revised during the session, only th
 
 ## Client
 
-- **Q35**: Expo + TypeScript (strict) for iOS, Android and web. Expo Router, **plain React Native styles** (no styling library), TanStack Query, Zod. EAS Build, Submit and Update. The Figma Make export is a visual reference only; every component is rebuilt.
-- **Q70**: component tests run on **Vitest with the community React Native plugin**. No Jest. Logic stays out of components, in hooks and pure functions, so most tests don't render anything.
+- **Q79 Two clients (replaces session 1's Q7, one codebase for native and web)**: a React Router web app and an Expo app for iOS and Android, with **feature parity, built web first** (ADR 0005).
+- **Q35 Native**: Expo + TypeScript (strict) for iOS and Android. Expo Router, **plain React Native styles** (no styling library), TanStack Query, Zod. EAS Build, Submit and Update.
+- **Q80 Web**: React Router v7 in **framework mode as a single-page app** (`ssr: false`, Vite). The build is static, and SSE uses the browser's native `EventSource`.
+- **Q81/Q86 Web styling**: **Sass, no Tailwind**.
+  - One `.scss` file per component, co-located, holding one **BEM** block with global class names (no CSS Modules).
+  - Tokens are CSS custom properties in `styles/_tokens.scss`, so mood colours can change at runtime; Sass supplies mixins and breakpoints.
+  - The `@use`/`@forward` module system, compiled with `sass-embedded`.
+  - Stylelint (`stylelint-config-standard-scss` plus a BEM `selector-class-pattern`).
+  - Modifiers go through a `bem()` helper.
+- **Q82 Design tokens**: the Figma design is the single source. Each app keeps its own copy (React Native style constants on native, `_tokens.scss` on the web), with no shared token package. The Figma Make export is a visual reference only; every component is rebuilt.
+- **Q83/Q87 Shared packages**: both apps differ only in components, navigation and platform services (see the Q48 layout).
+- **Q84/Q88 UI translations**: **i18next**.
+  - Resources are JSON per language and namespace (`common`, `story`, `parent`, `email`) in `@bardery/i18n`, with typed keys.
+  - The server uses them for emails.
+  - Detection uses the device or browser language, falling back to English; Parent settings can override it.
+  - **i18next-cli** (official, from the i18next maintainers) checks for missing keys in CI.
+- **Q70 Component tests**: Vitest everywhere, no Jest. On the web, Testing Library in jsdom. On native, the **community React Native plugin for Vitest**. Logic stays out of components, in hooks and pure functions, so most tests don't render anything.
 
 ## Backend
 
@@ -126,41 +142,55 @@ Answers below are final. Where an answer was revised during the session, only th
   - GitHub Container Registry (GHCR) for images.
   - Email via Azure Communication Services.
   - No Kubernetes. Costs stay low; scaling is configuration.
-- **Q69 Delivery**: media is served from private Blob Storage via short-lived signed URLs (SAS) issued by the API. The Expo web build goes on Azure Static Web Apps. No Front Door for now; its base fee is $35/month.
+- **Q69 Delivery**: media is served from private Blob Storage via short-lived signed URLs (SAS) issued by the API. `apps/web` is hosted on Azure Static Web Apps. No Front Door for now; its base fee is $35/month.
+- **Q85/Q89 Domain and DNS**:
+  - One custom domain, bought at united-domains, with its nameservers delegated to **Azure DNS**, so every record is Terraform code. The delegation is a one-time manual step documented in the infrastructure README.
+  - Subdomains: `app.` and `api.` for prod; `staging.` and `api.staging.` for staging.
+  - Same-site session cookies (`SameSite=Lax`, `Secure`, scoped to the parent domain).
 - **Q41 IaC**: **Terraform** (`azurerm`) with state in Azure Storage. GitHub Actions authenticates via OIDC federation to Entra ID. Environments `staging` and `prod`.
 - **Q42 Workflow**: GitHub + GitHub Actions, trunk-based with short-lived pull requests, squash-merged with a descriptive title. Renovate handles dependency updates.
-- **Q49 Changelog**: **Changesets** versions only `apps/mobile` and `apps/server`; every `packages/*` is private. A pull request needs a changeset unless it carries the `no-changeset` label. EAS auto-increments store build numbers.
+- **Q49 Changelog**: **Changesets** versions only `apps/web`, `apps/mobile` and `apps/server`; every `packages/*` is private. A pull request needs a changeset unless it carries the `no-changeset` label. EAS auto-increments store build numbers.
 - **Q73 Environments and releases**:
   - Environments: local, staging, prod. No preview environments per pull request in v1.
-  - Merging to `main` builds the image once, deploys to staging, runs migrations and a smoke test.
-  - Prod promotes the same image after manual approval.
+  - Merging to `main` builds the server image and the web bundle once, deploys both to staging, runs migrations and a smoke test.
+  - Prod promotes the same image and bundle after manual approval.
   - EAS build profiles `preview` and `production`; over-the-air update channels `staging` and `production`.
 - **Q74 CI gates**, run on Nx-affected projects:
-  - Code: oxfmt check, oxlint (type-aware, with module boundaries and layer rules), `tsc`, Vitest, build.
+  - Code: oxfmt check, oxlint (type-aware, with module boundaries and layer rules), Stylelint, `tsc`, Vitest, build.
+  - Translations: i18next-cli finds no missing keys.
   - Database: Drizzle migration check.
   - Infrastructure: `terraform fmt`/`validate`, tflint, and a `plan` comment on the pull request.
   - Security: GitHub secret scanning with push protection, CodeQL, Dependabot alerts, and Trivy scanning images and Terraform.
   - Supply chain: Actions pinned to commit SHAs; images signed with build provenance.
   - The changeset check.
-- **Q75 Local git hooks**: lefthook runs oxfmt and oxlint on staged files only.
+- **Q75 Local git hooks**: lefthook runs oxfmt, oxlint and Stylelint on staged files only.
 
 ## Repo and tooling
 
 - **Q48 Layout**:
   ```
-  apps/mobile        Expo app (iOS, Android, web)
-  apps/server        api + worker, layered as in Q46, plus the admin CLI
-  packages/shared    Zod schemas and types shared by client and server
-  packages/evals     AI eval datasets, scorers and harness
+  apps/web                  React Router app
+  apps/mobile               Expo app (iOS, Android)
+  apps/server               api + worker, layered as in Q46, plus the admin CLI
+  packages/shared/schemas   @bardery/schemas: Zod schemas and domain types for server and clients
+  packages/shared/client    @bardery/client: tRPC client, query hooks, view-model hooks, platform-service interfaces
+  packages/shared/i18n      @bardery/i18n: i18next resources and typed keys
+  packages/shared/utils     @bardery/utils: pure, framework-free, domain-free helpers only
+  packages/evals            AI eval datasets, scorers and harness
   infra/             Terraform (modules/, envs/staging, envs/prod)
   docs/              adr/, architecture/, research/, grilling/, design/
   ```
-- **Tooling**: pnpm workspaces + **Nx** with the free Nx Cloud tier for remote caching. Configuration lives at the repo root: `.oxlintrc.json`, oxfmt config, `tsconfig.base.json`, and `vitest.config.ts` with `test.projects`. There's no `packages/config`.
+  Nx tags enforce the allowed dependencies:
+  - `utils` and `i18n` depend on nothing;
+  - `schemas` → `utils`;
+  - `client` → `schemas`, `utils`, `i18n`;
+  - the server may use `schemas`, `utils` and `i18n`, never `client`.
+- **Tooling**: pnpm workspaces + **Nx** with the free Nx Cloud tier for remote caching. Configuration lives at the repo root: `.oxlintrc.json`, oxfmt config, Stylelint config, `tsconfig.base.json`, and `vitest.config.ts` with `test.projects`. There's no `packages/config`.
 - **Q63**: no `@nx/expo`. `apps/mobile` is a plain Nx project that calls the Expo CLI and EAS directly.
 - **Tooling gotchas found in research** (versions as of 2026-09-24):
   - oxlint runs Nx's module-boundaries rule through the experimental `@nx/oxlint` bridge.
   - Nested oxlint configs replace their parent rather than merge, so a nested config must `extends` it.
-  - oxfmt is still beta.
+  - oxfmt is still beta. Whether it formats SCSS is unverified; check this when setting up the repo.
   - Expo officially documents only Jest; Vitest with React Native relies on a community plugin.
   - Express has automatic OpenTelemetry instrumentation.
 
@@ -192,7 +222,7 @@ Answers below are final. Where an answer was revised during the session, only th
   - OpenTelemetry everywhere, including GenAI spans (model, tokens, latency, cost, prompt version).
   - **No story or prompt content in telemetry**; a span processor drops every attribute not on an allowlist.
   - Grafana Cloud's free EU tier, with dashboards and alerts as code.
-  - Sentry (EU) for errors on server, native and web, with personal data scrubbed.
+  - Sentry (EU) for errors on server, native and web (React SDK), with personal data scrubbed.
   - SLO burn-rate alerts; cost per Part as a metric with a budget alert.
   - **Q65**: no EAS Observe in v1, because its data is stored in the US.
 - **Q76 Admin**: a CLI in `apps/server` (`pnpm admin invite create`, `pnpm admin cost …`) run with Entra credentials. No admin UI and no roles.
@@ -200,7 +230,7 @@ Answers below are final. Where an answer was revised during the session, only th
 
 ## First implementation steps
 
-1. **Streaming spike**: tRPC SSE subscription through Express on Azure Container Apps (check the 240 s ingress timeout; send keep-alives) into Expo on iOS, Android and web (EventSource polyfill). Also check whether Azure's streaming content filter holds output back before release.
+1. **Streaming spike**: tRPC SSE subscription through Express on Azure Container Apps (check the 240 s ingress timeout; send keep-alives) into the web app (native `EventSource`) and Expo on iOS and Android (`EventSource` polyfill). Also check whether Azure's streaming content filter holds output back before release.
 2. **Illustration spike**: FLUX.2 [pro] with the Q54 reference selection on a hand-written 8-Part Storyline. Check Hero consistency and House Style, and measure cost per image.
 3. **Narration listening test**: 3 Narrators for each of the 9 languages.
 4. Scaffold the monorepo, CI gates and Terraform environments. Then build features test-first.

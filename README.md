@@ -19,7 +19,7 @@ These are early UI prototypes. See [`docs/design/`](docs/design/) for all screen
 
 ## Goal
 
-Bardery is a public reference for building a production-ready, AI-powered full-stack application: an Expo app for iOS, Android and web, a TypeScript backend, and AI generation of text, illustrations and narration, all running in the EU on Azure. Beyond the features, it shows the engineering around them: a clean layered architecture, tests, evaluations for the AI workflows, observability, infrastructure as code and CI/CD.
+Bardery is a public reference for building a production-ready, AI-powered full-stack application: a React Router web app, an Expo app for iOS and Android, a TypeScript backend, and AI generation of text, illustrations and narration, all running in the EU on Azure. Beyond the features, it shows the engineering around them: a clean layered architecture, tests, evaluations for the AI workflows, observability, infrastructure as code and CI/CD.
 
 ## Documentation
 
