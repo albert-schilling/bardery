@@ -1,6 +1,6 @@
 # Grilling session 2 — technical design (2026-09-24)
 
-Record of the second `/grill-with-docs` session. It closed session 1's open product questions (Q31–Q33) and settled the technical design (Q34–Q89; Q79–Q89 were added on 2026-09-25 and replace the single Expo codebase for native and web). The design tree has no open branches; the next step is implementation, starting with the spikes below.
+Record of the second `/grill-with-docs` session. It closed session 1's open product questions (Q31–Q33) and settled the technical design (Q34–Q89; Q79–Q89 were added on 2026-09-25 and replace the single Expo codebase for native and web). Q90–Q93 (2026-09-25) cover the domain, email and the walking skeleton. The design tree has no open branches; the next step is implementation, starting with the spikes below.
 
 Where to find what:
 
@@ -132,7 +132,7 @@ Answers below are final. Where an answer was revised during the session, only th
 ## Infrastructure and delivery
 
 - **Q38/Q44/Q71 Azure layout**:
-  - Resource groups `bardery-staging`, `bardery-prod` and `bardery-shared`.
+  - Resource groups `bardery-staging`, `bardery-prod` and `bardery-shared` (DNS zone), plus `bardery-tfstate`, created by a bootstrap script outside Terraform, for Terraform state (see `infra/README.md`).
   - A Container Apps environment (consumption plan) per environment:
     - `api`: min 1 replica in prod, 0 in staging.
     - `worker`: min 0, woken by KEDA's `postgresql` scaler on queue depth.
@@ -140,7 +140,7 @@ Answers below are final. Where an answer was revised during the session, only th
   - Postgres Flexible Server B1ms with pgvector and 7-day backups, one per environment.
   - Key Vault + managed identities.
   - GitHub Container Registry (GHCR) for images.
-  - Email via Azure Communication Services.
+  - Email via Azure Communication Services (sending only; receiving is Q93).
   - No Kubernetes. Costs stay low; scaling is configuration.
 - **Q69 Delivery**: media is served from private Blob Storage via short-lived signed URLs (SAS) issued by the API. `apps/web` is hosted on Azure Static Web Apps. No Front Door for now; its base fee is $35/month.
 - **Q85/Q89 Domain and DNS**:
@@ -227,6 +227,21 @@ Answers below are final. Where an answer was revised during the session, only th
   - **Q65**: no EAS Observe in v1, because its data is stored in the US.
 - **Q76 Admin**: a CLI in `apps/server` (`pnpm admin invite create`, `pnpm admin cost …`) run with Entra credentials. No admin UI and no roles.
 - **Q77**: no product analytics or trackers. Usage questions are answered with SQL over our own data and shown in Grafana as aggregates.
+
+## Getting started (2026-09-25)
+
+- **Q90 Domain**: **bardery.app**, registered at united-domains. bardery.com is parked for sale on Squadhelp. The prod subdomains from Q89 become `app.bardery.app` and `api.bardery.app`.
+- **Q91 Walking skeleton**: the first deliverable is the thinnest slice through every layer, web only:
+  - `apps/web`, `apps/server` and `packages/shared/schemas` only.
+  - Sign-in with an email one-time code (Better Auth and Azure Communication Services).
+  - Create one Profile; generate one Part, streamed over a tRPC subscription from GPT-6 Sol, and saved in Postgres. This doubles as the streaming spike.
+  - Deployed to staging only, by GitHub Actions and Terraform.
+  - Deferred: native, illustrations, narration, embeddings and search, Nx Cloud, Grafana, Sentry, Changesets and evals.
+- **Q92 Job queue**: still pg-boss or Graphile Worker; decided when the first background job arrives. The skeleton has none.
+- **Q93 Email addresses**:
+  - The app sends from `mail.bardery.app` through Azure Communication Services. Terraform writes the verification TXT, SPF, DKIM and DMARC records into Azure DNS.
+  - Receiving, for now: united-domains' free forwarding of `hello@`, `privacy@` and `security@` to the developer's Posteo inbox (MX records `mx00.udag.de` and `mx01.udag.de` in Azure DNS). This only receives; replies from Bardery addresses aren't possible yet.
+  - Target: a **mailbox.org** Standard mailbox (about €3/month, servers in Germany, DKIM, aliases on the domain), bought before the demo is opened to invitees. Switching means only changing DNS records.
 
 ## First implementation steps
 
