@@ -52,4 +52,4 @@ The state storage lives in its own resource group, outside Terraform, so no Terr
 
    Deleting the zone would give it new nameservers and break this delegation, so the zone has `prevent_destroy`.
 
-5. **Email forwarding** (Q93). Once the delegation is live, create the forwardings for `hello@`, `privacy@` and `security@` in united-domains' email settings, and confirm each one from the email it sends to the target inbox. The MX records they need are already in `envs/shared/main.tf`.
+5. **Email forwarding** (Q93). Switching to your own nameservers deactivates united-domains' email service and locks its forwarding settings ("Bereich gesperrt"). Reactivate the email service for the domain, then create the forwardings for `hello@`, `privacy@` and `security@` and confirm each one from the email it sends to the target inbox. The MX, SPF and DMARC records united-domains asks for are already in `envs/shared/main.tf`.

@@ -240,7 +240,7 @@ Answers below are final. Where an answer was revised during the session, only th
 - **Q92 Job queue**: still pg-boss or Graphile Worker; decided when the first background job arrives. The skeleton has none.
 - **Q93 Email addresses**:
   - The app sends from `mail.bardery.app` through Azure Communication Services. Terraform writes the verification TXT, SPF, DKIM and DMARC records into Azure DNS.
-  - Receiving, for now: united-domains' free forwarding of `hello@`, `privacy@` and `security@` to the developer's Posteo inbox (MX records `mx00.udag.de` and `mx01.udag.de` in Azure DNS). This only receives; replies from Bardery addresses aren't possible yet.
+  - Receiving, for now: united-domains' free forwarding of `hello@`, `privacy@` and `security@` to the developer's Posteo inbox (MX records `mx00.udag.de` and `mx01.udag.de`, plus the SPF and DMARC records united-domains recommends, in Azure DNS; united-domains' email service must be reactivated after switching to Azure's nameservers). This only receives; replies from Bardery addresses aren't possible yet.
   - Target: a **mailbox.org** Standard mailbox (about €3/month, servers in Germany, DKIM, aliases on the domain), bought before the demo is opened to invitees. Switching means only changing DNS records.
 
 ## First implementation steps
