@@ -1,0 +1,17 @@
+// Design tokens from the Figma design (docs/design/). CSS custom properties rather than
+// Sass variables, so values such as the mood colour can change at runtime (Q81).
+:root {
+  --color-ink: #1c1829;
+  --color-paper: #fafaf7;
+  --color-accent: #f97316;
+  --color-amber: #fbbf24;
+  --font-display: "Fraunces", georgia, serif;
+  --font-sans: "Nunito", system-ui, sans-serif;
+
+  // rem, so spacing grows with the reader's font size.
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+}

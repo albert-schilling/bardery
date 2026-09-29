@@ -7,3 +7,6 @@ pre-commit:
       stage_fixed: true
     - name: oxlint
       run: pnpm exec oxlint --no-error-on-unmatched-pattern {staged_files}
+    - name: stylelint
+      glob: "*.{css,scss}"
+      run: pnpm exec stylelint {staged_files}

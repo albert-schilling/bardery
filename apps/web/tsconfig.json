@@ -1,0 +1,16 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["**/*", ".react-router/types/**/*"],
+  "exclude": ["build"],
+  "compilerOptions": {
+    "lib": ["DOM", "DOM.Iterable", "ES2024"],
+    "types": ["vite/client"],
+    "target": "ES2024",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    // Lets route modules import their generated types from `./+types/<route>`.
+    "rootDirs": [".", "./.react-router/types"],
+    "noEmit": true
+  }
+}

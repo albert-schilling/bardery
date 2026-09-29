@@ -152,3 +152,7 @@ crash.log
 # Nx cache and workspace data
 .nx/cache
 .nx/workspace-data
+
+# React Router generated types and build output
+.react-router/
+apps/web/build/

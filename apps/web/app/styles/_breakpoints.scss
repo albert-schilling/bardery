@@ -1,0 +1,13 @@
+@use "sass:map";
+
+// em in media queries follows the browser's font size setting.
+$breakpoints: (
+  md: 48em,
+  lg: 64em,
+);
+
+@mixin from($name) {
+  @media (width >= map.get($breakpoints, $name)) {
+    @content;
+  }
+}
