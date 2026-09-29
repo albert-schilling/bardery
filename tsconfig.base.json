@@ -28,7 +28,7 @@
     // Treat every file as a module, even one without imports or exports.
     "moduleDetection": "force",
 
-    // Don't type-check declaration files in node_modules; it's slow and not ours to fix.
+    // Skip checking all declaration files (including project-owned `.d.ts`) to reduce compile time.
     "skipLibCheck": true
   }
 }
