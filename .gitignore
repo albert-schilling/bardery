@@ -148,3 +148,7 @@ vite.config.ts.timestamp-*
 *.tfstate.*
 *.tfplan
 crash.log
+
+# Nx cache and workspace data
+.nx/cache
+.nx/workspace-data

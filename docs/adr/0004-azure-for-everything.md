@@ -4,7 +4,7 @@ Bardery runs entirely on Microsoft Azure in the EU (region `swedencentral`, AI m
 
 ## Considered options
 
-- **Google Cloud** would bundle the most modalities in the EU, but its terms forbid its generative AI services in any app *"directed towards or likely to be accessed by individuals under the age of 18"* ([Service Specific Terms §20(d)](https://cloud.google.com/terms/service-terms)). That also rules out Claude on Vertex.
+- **Google Cloud** would bundle the most modalities in the EU, but its terms forbid its generative AI services in any app _"directed towards or likely to be accessed by individuals under the age of 18"_ ([Service Specific Terms §20(d)](https://cloud.google.com/terms/service-terms)). That also rules out Claude on Vertex.
 - **Anthropic's own API** offers no EU processing, only `global` or `us` ([data residency](https://platform.claude.com/docs/en/build-with-claude/data-residency)).
 - **AWS only**: Bedrock has no EU image model that takes multiple references (Nova Canvas is closed to new customers and reaches end of life on 2026-09-30, see [Bedrock model lifecycle](https://docs.aws.amazon.com/bedrock/latest/userguide/model-lifecycle-legacy.html)), and Polly has no Ukrainian voice and only two Turkish and Russian ones ([Polly voices](https://docs.aws.amazon.com/polly/latest/dg/available-voices.html)). Filling the gaps would have meant running our own GPU services.
 - **AWS with Claude on Bedrock**, plus a second vendor for illustrations and narration: rejected because it means two clouds for one small app.
