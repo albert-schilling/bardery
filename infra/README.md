@@ -2,11 +2,11 @@
 
 Terraform (`azurerm`) for everything on Azure, in `swedencentral` (ADR 0004).
 
-| Folder | What it manages | State file |
-|---|---|---|
-| `bootstrap/` | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state | — |
-| `envs/shared/` | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records | `shared.tfstate` |
-| `envs/staging/`, `envs/prod/` | One environment each (not yet written) | `staging.tfstate`, `prod.tfstate` |
+| Folder                        | What it manages                                                                                                   | State file                        |
+| ----------------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------- |
+| `bootstrap/`                  | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state | —                                 |
+| `envs/shared/`                | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records                                       | `shared.tfstate`                  |
+| `envs/staging/`, `envs/prod/` | One environment each (not yet written)                                                                            | `staging.tfstate`, `prod.tfstate` |
 
 The state storage lives in its own resource group, outside Terraform, so no Terraform root can delete the state it runs on. It allows Entra ID access only (no account keys), keeps blob versions and soft-deleted blobs for 30 days, and has a delete lock.
 
@@ -44,7 +44,7 @@ The state storage lives in its own resource group, outside Terraform, so no Terr
 
    If `init` fails with a 403, the role assignment from step 2 hasn't applied yet. Wait a few minutes and retry.
 
-4. **Delegate the domain.** At united-domains, open *bardery.app → Nameserver*, choose your own nameservers, and enter the four from the output. They look like `ns1-0X.azure-dns.com.`; enter them without the trailing dot. Delegation can take up to 48 hours to spread, usually much less. Check it with:
+4. **Delegate the domain.** At united-domains, open _bardery.app → Nameserver_, choose your own nameservers, and enter the four from the output. They look like `ns1-0X.azure-dns.com.`; enter them without the trailing dot. Delegation can take up to 48 hours to spread, usually much less. Check it with:
 
    ```sh
    curl -s 'https://dns.google/resolve?name=bardery.app&type=NS'
