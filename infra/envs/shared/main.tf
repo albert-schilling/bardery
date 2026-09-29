@@ -45,6 +45,7 @@ resource "azurerm_dns_txt_record" "apex" {
   }
 }
 
+# Also covers subdomains, so ACS mail from mail.bardery.app must pass DKIM or SPF alignment.
 resource "azurerm_dns_txt_record" "dmarc" {
   name                = "_dmarc"
   zone_name           = azurerm_dns_zone.bardery.name
@@ -52,6 +53,6 @@ resource "azurerm_dns_txt_record" "dmarc" {
   ttl                 = 3600
 
   record {
-    value = "v=DMARC1; p=none"
+    value = "v=DMARC1; p=quarantine"
   }
 }
