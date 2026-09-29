@@ -27,6 +27,7 @@ Node and pnpm versions are pinned in `.node-version` and `package.json`.
 - Small PRs: one issue per PR, about 300 changed lines at most, not counting lock files.
 - Every change comes with tests.
 - Decision records (ADRs, grilling records, PRDs, issues) name tools, not versions; `package.json` and the lockfile pin versions. State a minimum only when a decision depends on it.
+- A PR that changes the web app shows screenshots of each changed screen at phone (390px) and desktop (1280px) width, taken from the running app with Playwright. Commit them under `.github/pr-screenshots/`, embed them by that commit's SHA (`https://raw.githubusercontent.com/albert-schilling/bardery/<sha>/.github/pr-screenshots/<file>`), and delete them in the next commit so they never reach `main`.
 - Config files stay close to tool defaults; each deviation gets a one-line comment saying why.
 - After a PR is merged, add a line to [`docs/harness-log.md`](docs/harness-log.md).
 
