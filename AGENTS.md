@@ -26,6 +26,7 @@ Node and pnpm versions are pinned in `.node-version` and `package.json`.
 
 - Small PRs: one issue per PR, about 300 changed lines at most, not counting lock files.
 - Every change comes with tests.
+- Decision records (ADRs, grilling records, PRDs, issues) name tools, not versions; `package.json` and the lockfile pin versions. State a minimum only when a decision depends on it.
 - Config files stay close to tool defaults; each deviation gets a one-line comment saying why.
 - After a PR is merged, add a line to [`docs/harness-log.md`](docs/harness-log.md).
 

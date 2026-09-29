@@ -48,7 +48,7 @@ Answers below are final. Where an answer was revised during the session, only th
 
 - **Q79 Two clients (replaces session 1's Q7, one codebase for native and web)**: a React Router web app and an Expo app for iOS and Android, with **feature parity, built web first** (ADR 0005).
 - **Q35 Native**: Expo + TypeScript (strict) for iOS and Android. Expo Router, **plain React Native styles** (no styling library), TanStack Query, Zod. EAS Build, Submit and Update.
-- **Q80 Web**: React Router v7 in **framework mode as a single-page app** (`ssr: false`, Vite). The build is static, and SSE uses the browser's native `EventSource`.
+- **Q80 Web**: React Router in **framework mode as a single-page app** (`ssr: false`, Vite). The build is static, and SSE uses the browser's native `EventSource`.
 - **Q81/Q86 Web styling**: **Sass, no Tailwind**.
   - One `.scss` file per component, co-located, holding one **BEM** block with global class names (no CSS Modules).
   - Tokens are CSS custom properties in `styles/_tokens.scss`, so mood colours can change at runtime; Sass supplies mixins and breakpoints.
