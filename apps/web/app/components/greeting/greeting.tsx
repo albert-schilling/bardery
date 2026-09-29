@@ -1,4 +1,4 @@
-import { bem } from "../../lib/bem";
+import { bem } from "~/lib/bem";
 
 import "./greeting.scss";
 

@@ -1,4 +1,4 @@
-import { Greeting } from "../components/greeting/greeting";
+import { Greeting } from "~/components/greeting/greeting";
 
 export function meta() {
   return [{ title: "Bardery" }];

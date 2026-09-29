@@ -3,14 +3,19 @@
   "include": ["**/*", ".react-router/types/**/*"],
   "exclude": ["build"],
   "compilerOptions": {
+    // Only APIs that Vite's default browser target (Baseline widely available) supports without polyfills.
     "lib": ["DOM", "DOM.Iterable", "ES2024"],
     "types": ["vite/client"],
-    "target": "ES2024",
+    // Nothing is emitted; Vite transpiles for the browsers.
+    "target": "ESNext",
     "module": "ESNext",
     "moduleResolution": "bundler",
     "jsx": "react-jsx",
     // Lets route modules import their generated types from `./+types/<route>`.
     "rootDirs": [".", "./.react-router/types"],
+    "paths": {
+      "~/*": ["./app/*"]
+    },
     "noEmit": true
   }
 }
