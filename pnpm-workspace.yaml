@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - packages/*
+  - packages/shared/*
+
+# Neither install script is needed: `pnpm prepare` installs the lefthook hooks,
+# and Nx works without its postinstall.
+allowBuilds:
+  lefthook: false
+  nx: false

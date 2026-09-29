@@ -1,0 +1,9 @@
+# Runs sequentially (the default), so oxlint sees the files oxfmt has formatted.
+pre-commit:
+  jobs:
+    - name: oxfmt
+      # The flag keeps the hook quiet when only ignored or unsupported files are staged.
+      run: pnpm exec oxfmt --no-error-on-unmatched-pattern {staged_files}
+      stage_fixed: true
+    - name: oxlint
+      run: pnpm exec oxlint --no-error-on-unmatched-pattern {staged_files}

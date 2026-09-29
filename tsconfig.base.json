@@ -1,0 +1,34 @@
+// Shared compiler options for every project. Projects extend this and set their own
+// module, target, lib, jsx and types, because the web app, the server and the mobile app differ.
+// Unused locals and parameters are left to oxlint, so they don't block compilation.
+{
+  "compilerOptions": {
+    // Already the default since TypeScript 6; stated so it survives a change of defaults.
+    "strict": true,
+
+    // Indexing an array or a record can return undefined, so the type includes undefined.
+    "noUncheckedIndexedAccess": true,
+    // `prop?: T` means the property may be missing, not that it may be set to undefined.
+    "exactOptionalPropertyTypes": true,
+    // Every code path of a function that returns a value must return one.
+    "noImplicitReturns": true,
+    // Overriding a base class member needs the `override` keyword.
+    "noImplicitOverride": true,
+    // A non-empty `case` must end with `break`, `return` or `throw`.
+    "noFallthroughCasesInSwitch": true,
+    // Keys from an index signature need bracket access, so a typo in a declared property shows up.
+    "noPropertyAccessFromIndexSignature": true,
+
+    // Type-only imports must say `import type`, so each file can be compiled on its own.
+    "verbatimModuleSyntax": true,
+    // Every file must be transpilable on its own (Vite, esbuild, Node's type stripping).
+    "isolatedModules": true,
+    // No enums, namespaces or parameter properties, so Node can run TypeScript by stripping types.
+    "erasableSyntaxOnly": true,
+    // Treat every file as a module, even one without imports or exports.
+    "moduleDetection": "force",
+
+    // Don't type-check declaration files in node_modules; it's slow and not ours to fix.
+    "skipLibCheck": true
+  }
+}
