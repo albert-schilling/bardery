@@ -2,5 +2,8 @@
 
 One entry per merged PR: what the coding agent got wrong or needed to be told, and what changed in the harness so it won't happen again. See the [walking skeleton PRD](prd/walking-skeleton.md#harness-log).
 
-| PR  | What went wrong | Harness change |
-| --- | --------------- | -------------- |
+| PR  | What went wrong                                                                                                                  | Harness change                                                                                                                                     |
+| --- | -------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #19 | Q80 said "React Router v7", but the current major is v8, so the record was wrong before any code existed.                        | `AGENTS.md`: decision records name tools, not versions.                                                                                            |
+| #19 | The PR had no screenshots, so reviewers couldn't see the change.                                                                 | `AGENTS.md`: PRs that change what a client shows include phone and desktop screenshots from the running app.                                       |
+| #19 | The review had to ask for `~/` imports, `project.json` instead of an `nx` field in `package.json`, and `src/` instead of `app/`. | oxlint `import/no-relative-parent-imports` for `apps/**`; `AGENTS.md`: Nx projects keep their config in `project.json` and their source in `src/`. |
