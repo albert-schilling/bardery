@@ -1,12 +1,13 @@
 # Infrastructure
 
-Terraform (`azurerm`) for everything on Azure, in `swedencentral` (ADR 0004).
+Terraform (`azurerm`) for everything on Azure, in `swedencentral` (ADR 0004). The one exception is the Static Web App: the service isn't offered in `swedencentral`, so it runs in `westeurope`, its EU region.
 
-| Folder                        | What it manages                                                                                                   | State file                        |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| `bootstrap/`                  | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state | —                                 |
-| `envs/shared/`                | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records                                       | `shared.tfstate`                  |
-| `envs/staging/`, `envs/prod/` | One environment each (not yet written)                                                                            | `staging.tfstate`, `prod.tfstate` |
+| Folder          | What it manages                                                                                                                     | State file        |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| `bootstrap/`    | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state                   | —                 |
+| `envs/shared/`  | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records                                                         | `shared.tfstate`  |
+| `envs/staging/` | Resource group `bardery-staging`: the Static Web App for `apps/web` at `staging.bardery.app`, and its DNS record in the shared zone | `staging.tfstate` |
+| `envs/prod/`    | Prod (not yet written)                                                                                                              | `prod.tfstate`    |
 
 The state storage lives in its own resource group, outside Terraform, so no Terraform root can delete the state it runs on. It allows Entra ID access only (no account keys), keeps blob versions and soft-deleted blobs for 30 days, and has a delete lock.
 
@@ -53,3 +54,27 @@ The state storage lives in its own resource group, outside Terraform, so no Terr
    Deleting the zone would give it new nameservers and break this delegation, so the zone has `prevent_destroy`.
 
 5. **Email forwarding** (Q93). Switching to your own nameservers deactivates united-domains' email service and locks its forwarding settings ("Bereich gesperrt"). Reactivate the email service for the domain, then create the forwardings for `hello@`, `privacy@` and `security@` and confirm each one from the email it sends to the target inbox. The MX, SPF and DMARC records united-domains asks for are already in `envs/shared/main.tf`.
+
+## Staging
+
+1. Create the environment, once `envs/shared` is applied and the domain is delegated:
+
+   ```sh
+   cd infra/envs/staging
+   terraform init
+   terraform apply
+   ```
+
+   The custom domain waits until Static Web Apps has validated the `staging` CNAME, which can take several minutes. The certificate follows on its own, also within minutes.
+
+2. **Deploy the web app by hand** until CI does it (#4). From the repository root:
+
+   ```sh
+   pnpm nx build web
+   TOKEN=$(az staticwebapp secrets list --name bardery-staging-web --query properties.apiKey -o tsv)
+   pnpm dlx @azure/static-web-apps-cli deploy apps/web/build/client --deployment-token "$TOKEN" --env production
+   ```
+
+   `--env production` targets the app's only environment; preview environments are turned off (Q73). `apps/web/public/staticwebapp.config.json` is copied into the build and makes every path fall back to `index.html`, so reloading a deep link works.
+
+3. Check it: `https://staging.bardery.app` shows the page with a valid certificate, `https://staging.bardery.app/any/path` still serves it, and `terraform plan` shows no changes.
