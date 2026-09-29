@@ -14,7 +14,7 @@
     // Lets route modules import their generated types from `./+types/<route>`.
     "rootDirs": [".", "./.react-router/types"],
     "paths": {
-      "~/*": ["./app/*"]
+      "~/*": ["./src/*"]
     },
     "noEmit": true
   }

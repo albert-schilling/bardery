@@ -7,7 +7,7 @@
     "build": "react-router build",
     "typecheck": "react-router typegen && tsc",
     "test": "vitest run",
-    "lint": "oxlint && stylelint \"app/**/*.scss\""
+    "lint": "oxlint && stylelint \"src/**/*.scss\""
   },
   "dependencies": {
     "isbot": "^5",
