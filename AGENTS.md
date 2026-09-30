@@ -29,6 +29,7 @@ Node and pnpm versions are pinned in `.node-version` and `package.json`.
 - Decision records (ADRs, grilling records, PRDs, issues) name tools, not versions; `package.json` and the lockfile pin versions. State a minimum only when a decision depends on it.
 - A PR that changes what a client shows includes screenshots of each changed screen, taken from the running app: the web app at phone (390px) and desktop (1280px) width with Playwright, the native app on iOS and Android. Commit them under `.github/pr-screenshots/`, embed them by that commit's SHA (`https://raw.githubusercontent.com/albert-schilling/bardery/<sha>/.github/pr-screenshots/<file>`), and delete them in the next commit so they never reach `main`.
 - Nx projects keep their config in `project.json` and their source in `src/`.
+- Apps import across folders through an absolute alias (`~/` for `src/`, set in `tsconfig.json` and the Vite config); oxlint's `import/no-relative-parent-imports` fails `../` imports under `apps/`.
 - Config files stay close to tool defaults; each deviation gets a one-line comment saying why.
 - After a PR is merged, add a line to [`docs/harness-log.md`](docs/harness-log.md).
 
