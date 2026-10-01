@@ -59,14 +59,17 @@ The state storage lives in its own resource group, outside Terraform, so no Terr
 
 Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, doesn't accept new customers. Until #22 moves it back, the `web` Container App serves it with nginx (`apps/web/Dockerfile`), from the public image `ghcr.io/albert-schilling/bardery-web` (GHCR, Q38).
 
-1. **Push the first image**, because the Container App needs one to start. Create a GitHub personal access token (classic) with `write:packages`, then, from the repository root:
+1. **Push the first image**, because the Container App needs one to start. Log in to GHCR with the GitHub CLI's token, which needs the `write:packages` scope. From the repository root:
 
    ```sh
-   echo "$GITHUB_TOKEN" | docker login ghcr.io -u albert-schilling --password-stdin
+   gh auth refresh -s write:packages
+   gh auth token | docker login ghcr.io -u albert-schilling --password-stdin
    pnpm nx build web
    docker build --platform linux/amd64 -t ghcr.io/albert-schilling/bardery-web:latest apps/web
    docker push ghcr.io/albert-schilling/bardery-web:latest
    ```
+
+   If the push says `denied`, the token lacks the scope (rerun the refresh) or you aren't logged in (check with `grep ghcr.io ~/.docker/config.json`). Without the GitHub CLI, use a personal access token (classic) with `write:packages` instead; GHCR rejects fine-grained tokens. From #4 on, CI pushes the image with the workflow's own `GITHUB_TOKEN` (`permissions: packages: write`), so this login is needed only for hand deploys.
 
    Then make the package public, so Container Apps pulls it without credentials: on GitHub, open _Packages → bardery-web → Package settings → Change visibility_.
 
