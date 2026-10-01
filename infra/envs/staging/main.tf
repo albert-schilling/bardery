@@ -71,7 +71,9 @@ resource "azurerm_dns_txt_record" "web_verification" {
   }
 }
 
-# Without a certificate ID, Container Apps issues and renews a free managed certificate.
+# Only registers the hostname with no certificate bound. Azure creates a managed certificate once the
+# hostname is on the app, so it is created and bound with `az containerapp hostname bind` (infra/README.md);
+# doing it here would make this resource and the certificate depend on each other.
 resource "azurerm_container_app_custom_domain" "web" {
   name             = trimsuffix(azurerm_dns_cname_record.web.fqdn, ".")
   container_app_id = azurerm_container_app.web.id
@@ -79,7 +81,7 @@ resource "azurerm_container_app_custom_domain" "web" {
   depends_on = [azurerm_dns_txt_record.web_verification]
 
   lifecycle {
-    # Azure sets both once the managed certificate is bound; the provider docs require ignoring them.
+    # `az containerapp hostname bind` sets both; the provider docs require ignoring them.
     ignore_changes = [certificate_binding_type, container_app_environment_certificate_id]
   }
 }

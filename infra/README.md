@@ -81,9 +81,18 @@ Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, d
    terraform apply
    ```
 
-   The custom domain waits until Container Apps sees the `asuid.staging` TXT record, and the managed certificate takes a few more minutes.
+   The custom domain waits until Container Apps sees the `asuid.staging` TXT record. It only registers the hostname: until a certificate is bound, `https://staging.bardery.app` fails with a connection reset.
 
-3. **Deploy by hand** until CI does it (#4). Each deploy pushes an image tagged with the commit and points the app at it:
+3. **Bind a free managed certificate**, once, after the apply. This creates the certificate and binds it to the hostname, and takes a few minutes:
+
+   ```sh
+   az containerapp hostname bind --hostname staging.bardery.app -n web -g bardery-staging \
+     --environment bardery-staging --validation-method CNAME
+   ```
+
+   Azure renews the certificate on its own. Terraform ignores the binding, so `terraform plan` stays clean.
+
+4. **Deploy by hand** until CI does it (#4). Each deploy pushes an image tagged with the commit and points the app at it:
 
    ```sh
    pnpm nx build web
@@ -95,6 +104,6 @@ Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, d
 
    Terraform ignores the image, so a deploy doesn't show up as drift.
 
-4. **Check it**: `https://staging.bardery.app` shows the page with a valid certificate, `https://staging.bardery.app/any/path` still serves it, and `terraform plan` shows no changes. The app scales to zero, so the first request after a quiet spell takes a few seconds.
+5. **Check it**: `https://staging.bardery.app` shows the page with a valid certificate, `https://staging.bardery.app/any/path` still serves it, and `terraform plan` shows no changes. The app scales to zero, so the first request after a quiet spell takes a few seconds.
 
 `pnpm nx test-image web` builds the image and checks that deep links serve the app and missing assets return 404. CI runs it too.
