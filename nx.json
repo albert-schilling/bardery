@@ -1,5 +1,5 @@
 {
   "$schema": "./node_modules/nx/schemas/nx-schema.json",
-  // Nx Cloud remote caching is out of scope for the walking skeleton; this also stops Nx from offering it.
-  "neverConnectToCloud": true
+  "neverConnectToCloud": true,
+  "analytics": false
 }
