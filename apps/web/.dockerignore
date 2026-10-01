@@ -1,0 +1,4 @@
+# The image needs only the nginx config and the client build.
+*
+!nginx.conf
+!build/client

@@ -7,6 +7,7 @@
     "build": "react-router build",
     "typecheck": "react-router typegen && tsc",
     "test": "vitest run",
+    "test-image": "./test-image.sh",
     "lint": "oxlint && stylelint \"src/**/*.scss\""
   },
   "dependencies": {

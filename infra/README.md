@@ -2,11 +2,12 @@
 
 Terraform (`azurerm`) for everything on Azure, in `swedencentral` (ADR 0004).
 
-| Folder                        | What it manages                                                                                                   | State file                        |
-| ----------------------------- | ----------------------------------------------------------------------------------------------------------------- | --------------------------------- |
-| `bootstrap/`                  | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state | —                                 |
-| `envs/shared/`                | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records                                       | `shared.tfstate`                  |
-| `envs/staging/`, `envs/prod/` | One environment each (not yet written)                                                                            | `staging.tfstate`, `prod.tfstate` |
+| Folder          | What it manages                                                                                                                                                     | State file        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| `bootstrap/`    | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state                                                   | —                 |
+| `envs/shared/`  | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records                                                                                         | `shared.tfstate`  |
+| `envs/staging/` | Resource group `bardery-staging`: the Container Apps environment, the `web` app serving `apps/web` at `staging.bardery.app`, and its DNS records in the shared zone | `staging.tfstate` |
+| `envs/prod/`    | Prod (not yet written)                                                                                                                                              | `prod.tfstate`    |
 
 The state storage lives in its own resource group, outside Terraform, so no Terraform root can delete the state it runs on. It allows Entra ID access only (no account keys), keeps blob versions and soft-deleted blobs for 30 days, and has a delete lock.
 
@@ -53,3 +54,56 @@ The state storage lives in its own resource group, outside Terraform, so no Terr
    Deleting the zone would give it new nameservers and break this delegation, so the zone has `prevent_destroy`.
 
 5. **Email forwarding** (Q93). Switching to your own nameservers deactivates united-domains' email service and locks its forwarding settings ("Bereich gesperrt"). Reactivate the email service for the domain, then create the forwardings for `hello@`, `privacy@` and `security@` and confirm each one from the email it sends to the target inbox. The MX, SPF and DMARC records united-domains asks for are already in `envs/shared/main.tf`.
+
+## Staging
+
+Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, doesn't accept new customers. Until #22 moves it back, the `web` Container App serves it with nginx (`apps/web/Dockerfile`), from the public image `ghcr.io/albert-schilling/bardery-web` (GHCR, Q38).
+
+1. **Push the first image**, because the Container App needs one to start. Log in to GHCR with the GitHub CLI's token, which needs the `write:packages` scope. From the repository root:
+
+   ```sh
+   gh auth refresh -s write:packages
+   gh auth token | docker login ghcr.io -u albert-schilling --password-stdin
+   pnpm nx build web
+   docker build --platform linux/amd64 -t ghcr.io/albert-schilling/bardery-web:latest apps/web
+   docker push ghcr.io/albert-schilling/bardery-web:latest
+   ```
+
+   If the push says `denied`, the token lacks the scope (rerun the refresh) or you aren't logged in (check with `grep ghcr.io ~/.docker/config.json`). Without the GitHub CLI, use a personal access token (classic) with `write:packages` instead; GHCR rejects fine-grained tokens. From #4 on, CI pushes the image with the workflow's own `GITHUB_TOKEN` (`permissions: packages: write`), so this login is needed only for hand deploys.
+
+   Then make the package public, so Container Apps pulls it without credentials: on GitHub, open _Packages → bardery-web → Package settings → Change visibility_.
+
+2. **Create the environment**, once `envs/shared` is applied and the domain is delegated:
+
+   ```sh
+   cd infra/envs/staging
+   terraform init
+   terraform apply
+   ```
+
+   The custom domain waits until Container Apps sees the `asuid.staging` TXT record. It only registers the hostname: until a certificate is bound, `https://staging.bardery.app` fails with a connection reset.
+
+3. **Bind a free managed certificate**, once, after the apply. This creates the certificate and binds it to the hostname, and takes a few minutes:
+
+   ```sh
+   az containerapp hostname bind --hostname staging.bardery.app -n web -g bardery-staging \
+     --environment bardery-staging --validation-method CNAME
+   ```
+
+   Azure renews the certificate on its own. Terraform ignores the binding, so `terraform plan` stays clean.
+
+4. **Deploy by hand** until CI does it (#4). Each deploy pushes an image tagged with the commit and points the app at it:
+
+   ```sh
+   pnpm nx build web
+   TAG=ghcr.io/albert-schilling/bardery-web:$(git rev-parse --short HEAD)
+   docker build --platform linux/amd64 -t "$TAG" apps/web
+   docker push "$TAG"
+   az containerapp update -n web -g bardery-staging --image "$TAG"
+   ```
+
+   Terraform ignores the image, so a deploy doesn't show up as drift.
+
+5. **Check it**: `https://staging.bardery.app` shows the page with a valid certificate, `https://staging.bardery.app/any/path` still serves it, and `terraform plan` shows no changes. The app scales to zero, so the first request after a quiet spell takes a few seconds.
+
+`pnpm nx test-image web` builds the image and checks that deep links serve the app and missing assets return 404. CI runs it too.
