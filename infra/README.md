@@ -55,6 +55,27 @@ The state storage lives in its own resource group, outside Terraform, so no Terr
 
 5. **Email forwarding** (Q93). Switching to your own nameservers deactivates united-domains' email service and locks its forwarding settings ("Bereich gesperrt"). Reactivate the email service for the domain, then create the forwardings for `hello@`, `privacy@` and `security@` and confirm each one from the email it sends to the target inbox. The MX, SPF and DMARC records united-domains asks for are already in `envs/shared/main.tf`.
 
+## CI/CD (GitHub Actions)
+
+`.github/workflows/ci.yml` runs the checks and `terraform plan` (posted as a PR comment) on pull requests, and on merge to `main` applies `envs/staging` and deploys the web app. It signs in to Azure through OIDC: the Entra application `bardery-github-actions` in `envs/shared` has federated credentials for `main`, pull requests and the `staging` GitHub environment, so no Azure secret is stored. CI never applies `envs/shared`.
+
+One-time setup, after the first `envs/staging` apply (the role assignment on `bardery-staging` needs that resource group to exist):
+
+1. Apply the identity. Your `az login` needs permission to create Entra applications (Application Developer or higher):
+
+   ```sh
+   cd infra/envs/shared
+   terraform init -upgrade   # adds the azuread provider to the lock file
+   terraform apply
+   terraform output github_actions
+   ```
+
+2. Add the three values as repository _variables_ (they aren't secrets): _Settings → Secrets and variables → Actions → Variables_: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
+3. Create the GitHub environment `staging`: _Settings → Environments_. The deploy job runs in it, which is the `environment:staging` federated credential's subject.
+4. Turn on secret scanning with push protection: _Settings → Advanced Security → Secret protection_, enable _Secret protection_ and _Push protection_.
+
+The identity's roles: Contributor on `bardery-staging`, DNS Zone Contributor on the `bardery.app` zone, Storage Blob Data Contributor on the state account, and Reader on `bardery-shared`. Reader is the one addition: a `shared` plan refreshes the resource group, which the other roles don't cover.
+
 ## Staging
 
 Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, doesn't accept new customers. Until #22 moves it back, the `web` Container App serves it with nginx (`apps/web/Dockerfile`), from the public image `ghcr.io/albert-schilling/bardery-web` (GHCR, Q38).
@@ -92,7 +113,7 @@ Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, d
 
    Azure renews the certificate on its own. Terraform ignores the binding, so `terraform plan` stays clean.
 
-4. **Deploy by hand** until CI does it (#4). Each deploy pushes an image tagged with the commit and points the app at it:
+4. **Deploy by hand** (CI does it since #4). Each deploy pushes an image tagged with the commit and points the app at it:
 
    ```sh
    pnpm nx build web
@@ -102,7 +123,7 @@ Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, d
    az containerapp update -n web -g bardery-staging --image "$TAG"
    ```
 
-   Terraform ignores the image, so a deploy doesn't show up as drift.
+   Terraform ignores the image, so a deploy doesn't show up as drift. Since #4, CI does all of this on every merge to `main`; hand deploys are only for emergencies.
 
 5. **Check it**: `https://staging.bardery.app` shows the page with a valid certificate, `https://staging.bardery.app/any/path` still serves it, and `terraform plan` shows no changes. The app scales to zero, so the first request after a quiet spell takes a few seconds.
 
