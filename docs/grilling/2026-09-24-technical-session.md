@@ -146,6 +146,7 @@ Answers below are final. Where an answer was revised during the session, only th
   - Email via Azure Communication Services (sending only; receiving is Q93).
   - No Kubernetes. Costs stay low; scaling is configuration.
 - **Q69 Delivery**: media is served from private Blob Storage via short-lived signed URLs (SAS) issued by the API. `apps/web` is hosted on Azure Static Web Apps. No Front Door for now; its base fee is $35/month.
+  - 2026-10-01: Static Web Apps' only EU region, `westeurope`, doesn't accept new customers, so `apps/web` runs as an nginx Container App in `swedencentral` until #22 moves it back.
 - **Q85/Q89 Domain and DNS**:
   - One custom domain, bought at united-domains, with its nameservers delegated to **Azure DNS**, so every record is Terraform code. The delegation is a one-time manual step documented in the infrastructure README.
   - Subdomains: `app.` and `api.` for prod; `staging.` and `api.staging.` for staging.

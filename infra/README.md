@@ -1,13 +1,13 @@
 # Infrastructure
 
-Terraform (`azurerm`) for everything on Azure, in `swedencentral` (ADR 0004). The one exception is the Static Web App: the service isn't offered in `swedencentral`, so it runs in `westeurope`, its EU region.
+Terraform (`azurerm`) for everything on Azure, in `swedencentral` (ADR 0004).
 
-| Folder          | What it manages                                                                                                                     | State file        |
-| --------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| `bootstrap/`    | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state                   | —                 |
-| `envs/shared/`  | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records                                                         | `shared.tfstate`  |
-| `envs/staging/` | Resource group `bardery-staging`: the Static Web App for `apps/web` at `staging.bardery.app`, and its DNS record in the shared zone | `staging.tfstate` |
-| `envs/prod/`    | Prod (not yet written)                                                                                                              | `prod.tfstate`    |
+| Folder          | What it manages                                                                                                                                                     | State file        |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| `bootstrap/`    | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state                                                   | —                 |
+| `envs/shared/`  | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records                                                                                         | `shared.tfstate`  |
+| `envs/staging/` | Resource group `bardery-staging`: the Container Apps environment, the `web` app serving `apps/web` at `staging.bardery.app`, and its DNS records in the shared zone | `staging.tfstate` |
+| `envs/prod/`    | Prod (not yet written)                                                                                                                                              | `prod.tfstate`    |
 
 The state storage lives in its own resource group, outside Terraform, so no Terraform root can delete the state it runs on. It allows Entra ID access only (no account keys), keeps blob versions and soft-deleted blobs for 30 days, and has a delete lock.
 
@@ -57,7 +57,20 @@ The state storage lives in its own resource group, outside Terraform, so no Terr
 
 ## Staging
 
-1. Create the environment, once `envs/shared` is applied and the domain is delegated:
+Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, doesn't accept new customers. Until #22 moves it back, the `web` Container App serves it with nginx (`apps/web/Dockerfile`), from the public image `ghcr.io/albert-schilling/bardery-web` (GHCR, Q38).
+
+1. **Push the first image**, because the Container App needs one to start. Create a GitHub personal access token (classic) with `write:packages`, then, from the repository root:
+
+   ```sh
+   echo "$GITHUB_TOKEN" | docker login ghcr.io -u albert-schilling --password-stdin
+   pnpm nx build web
+   docker build --platform linux/amd64 -t ghcr.io/albert-schilling/bardery-web:latest apps/web
+   docker push ghcr.io/albert-schilling/bardery-web:latest
+   ```
+
+   Then make the package public, so Container Apps pulls it without credentials: on GitHub, open _Packages → bardery-web → Package settings → Change visibility_.
+
+2. **Create the environment**, once `envs/shared` is applied and the domain is delegated:
 
    ```sh
    cd infra/envs/staging
@@ -65,16 +78,20 @@ The state storage lives in its own resource group, outside Terraform, so no Terr
    terraform apply
    ```
 
-   The custom domain waits until Static Web Apps has validated the `staging` CNAME, which can take several minutes. The certificate follows on its own, also within minutes.
+   The custom domain waits until Container Apps sees the `asuid.staging` TXT record, and the managed certificate takes a few more minutes.
 
-2. **Deploy the web app by hand** until CI does it (#4). From the repository root:
+3. **Deploy by hand** until CI does it (#4). Each deploy pushes an image tagged with the commit and points the app at it:
 
    ```sh
    pnpm nx build web
-   TOKEN=$(az staticwebapp secrets list --name bardery-staging-web --query properties.apiKey -o tsv)
-   pnpm dlx @azure/static-web-apps-cli deploy apps/web/build/client --deployment-token "$TOKEN" --env production
+   TAG=ghcr.io/albert-schilling/bardery-web:$(git rev-parse --short HEAD)
+   docker build --platform linux/amd64 -t "$TAG" apps/web
+   docker push "$TAG"
+   az containerapp update -n web -g bardery-staging --image "$TAG"
    ```
 
-   `--env production` targets the app's only environment; preview environments are turned off (Q73). `apps/web/public/staticwebapp.config.json` is copied into the build and makes every path fall back to `index.html`, so reloading a deep link works.
+   Terraform ignores the image, so a deploy doesn't show up as drift.
 
-3. Check it: `https://staging.bardery.app` shows the page with a valid certificate, `https://staging.bardery.app/any/path` still serves it, and `terraform plan` shows no changes.
+4. **Check it**: `https://staging.bardery.app` shows the page with a valid certificate, `https://staging.bardery.app/any/path` still serves it, and `terraform plan` shows no changes. The app scales to zero, so the first request after a quiet spell takes a few seconds.
+
+`pnpm nx test-image web` builds the image and checks that deep links serve the app and missing assets return 404. CI runs it too.
