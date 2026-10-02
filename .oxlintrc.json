@@ -14,6 +14,144 @@
       "files": ["apps/**"],
       "plugins": ["import"],
       "rules": { "import/no-relative-parent-imports": "error" }
+    },
+    // The server's layers (Q46): imports only go one way, routers → services → repositories, providers
+    // and domain. Each folder lists what it may import from `~/`; everything else under `~/` is an error.
+    {
+      "files": ["apps/server/src/routers/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/routers/**", "!~/services/**", "!~/domain/**"],
+                "message": "routers/ may import only services/ and domain/ (Q46)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/services/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "~/**",
+                  "!~/services/**",
+                  "!~/repositories/**",
+                  "!~/providers/**",
+                  "!~/domain/**",
+                  "!~/prompts/**",
+                  "!~/db/**"
+                ],
+                "message": "services/ may import only repositories/, providers/, domain/, prompts/ and db/ (Q46)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/repositories/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/repositories/**", "!~/db/**", "!~/domain/**"],
+                "message": "repositories/ may import only db/ and domain/ (Q46)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/providers/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/providers/**", "!~/prompts/**", "!~/domain/**"],
+                "message": "providers/ may import only prompts/ and domain/ (Q46)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/jobs/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/jobs/**", "!~/services/**", "!~/domain/**"],
+                "message": "jobs/ may import only services/ and domain/ (Q46)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/prompts/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/prompts/**", "!~/domain/**"],
+                "message": "prompts/ may import only domain/ (Q46)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/db/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/db/**", "!~/domain/**"],
+                "message": "db/ may import only domain/ (Q46)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/domain/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/domain/**"],
+                "message": "domain/ imports no other folder (Q46)."
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "ignorePatterns": [
