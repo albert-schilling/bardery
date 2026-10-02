@@ -1,4 +1,5 @@
-# The identity GitHub Actions uses to reach Azure (Q41). It lives here, not in CI's own roots,
+# The identities GitHub Actions uses to reach Azure (Q41): one that writes, for trusted runs on
+# main, and one that only reads, for pull requests. It lives here, not in CI's own roots,
 # because CI can't create its own identity: you apply this root by hand (infra/README.md).
 # Federated credentials mean no secret is stored anywhere.
 
@@ -20,12 +21,12 @@ resource "azuread_service_principal" "github" {
 }
 
 # A workflow job gets one subject, chosen by how it runs: a job with `environment:` gets the
-# environment subject only, so the deploy job needs `staging` and the checks need the other two.
+# environment subject only. This identity can write, so it only trusts main and the `staging`
+# environment, whose deployment branches must be limited to main (infra/README.md).
 resource "azuread_application_federated_identity_credential" "github" {
   for_each = {
-    main          = "ref:refs/heads/main"
-    pull-requests = "pull_request"
-    staging       = "environment:staging"
+    main    = "ref:refs/heads/main"
+    staging = "environment:staging"
   }
 
   application_id = azuread_application.github.id
@@ -102,5 +103,54 @@ resource "azuread_service_principal" "msgraph" {
 resource "azuread_app_role_assignment" "github_graph_read" {
   app_role_id         = azuread_service_principal.msgraph.app_role_ids["Application.Read.All"]
   principal_object_id = azuread_service_principal.github.object_id
+  resource_object_id  = azuread_service_principal.msgraph.object_id
+}
+
+# Pull requests run workflow code that the PR itself can change, with no approval before it runs.
+# So they get their own identity that can't write anything: the write identity above never trusts
+# the `pull_request` subject.
+resource "azuread_application" "github_plan" {
+  display_name = "bardery-github-actions-plan"
+}
+
+resource "azuread_service_principal" "github_plan" {
+  client_id = azuread_application.github_plan.client_id
+}
+
+resource "azuread_application_federated_identity_credential" "github_plan" {
+  application_id = azuread_application.github_plan.id
+  display_name   = "github-pull-requests"
+  description    = "GitHub Actions on pull requests"
+  audiences      = ["api://AzureADTokenExchange"]
+  issuer         = "https://token.actions.githubusercontent.com"
+  subject        = "repo:${local.repository}:pull_request"
+}
+
+# Reads everything a plan refreshes. Reader on the groups covers the zone and its records too.
+resource "azurerm_role_assignment" "github_plan_shared" {
+  scope                = azurerm_resource_group.shared.id
+  role_definition_name = "Reader"
+  principal_id         = azuread_service_principal.github_plan.object_id
+}
+
+resource "azurerm_role_assignment" "github_plan_staging" {
+  count = var.staging_exists ? 1 : 0
+
+  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/bardery-staging"
+  role_definition_name = "Reader"
+  principal_id         = azuread_service_principal.github_plan.object_id
+}
+
+resource "azurerm_role_assignment" "github_plan_state" {
+  for_each = toset(["Reader", "Storage Blob Data Reader"])
+
+  scope                = local.state_account_id
+  role_definition_name = each.key
+  principal_id         = azuread_service_principal.github_plan.object_id
+}
+
+resource "azuread_app_role_assignment" "github_plan_graph_read" {
+  app_role_id         = azuread_service_principal.msgraph.app_role_ids["Application.Read.All"]
+  principal_object_id = azuread_service_principal.github_plan.object_id
   resource_object_id  = azuread_service_principal.msgraph.object_id
 }

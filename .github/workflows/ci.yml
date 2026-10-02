@@ -80,7 +80,8 @@ jobs:
     env:
       ARM_USE_OIDC: true
       ARM_USE_AZUREAD_AUTH: true
-      ARM_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+      # The read-only identity: pull requests run code the PR itself can change.
+      ARM_CLIENT_ID: ${{ vars.AZURE_PLAN_CLIENT_ID }}
       ARM_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
     defaults:
@@ -94,8 +95,8 @@ jobs:
           terraform_wrapper: false
 
       - run: terraform init -input=false
-      # A plan is read-only, so it must not wait on or hold the state lock for long.
-      - run: terraform plan -input=false -no-color -lock-timeout=60s -out=tfplan
+      # No lock: a read-only identity can't write the lock to the state blob.
+      - run: terraform plan -input=false -no-color -lock=false -out=tfplan
       - run: terraform show -no-color tfplan > plan.txt
 
       - uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0

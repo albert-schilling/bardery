@@ -57,7 +57,7 @@ The state storage lives in its own resource group, outside Terraform, so no Terr
 
 ## CI/CD (GitHub Actions)
 
-`.github/workflows/ci.yml` runs the checks and `terraform plan` (posted as a PR comment) on pull requests, and on merge to `main` applies `envs/staging` and deploys the web app. It signs in to Azure through OIDC: the Entra application `bardery-github-actions` in `envs/shared` has federated credentials for `main`, pull requests and the `staging` GitHub environment, so no Azure secret is stored. CI never applies `envs/shared`.
+`.github/workflows/ci.yml` runs the checks and `terraform plan` (posted as a PR comment) on pull requests, and on merge to `main` applies `envs/staging` and deploys the web app. It signs in to Azure through OIDC, so no Azure secret is stored. Two Entra applications in `envs/shared` keep pull requests away from write access: `bardery-github-actions` (credentials for `main` and the `staging` GitHub environment) applies and deploys, and `bardery-github-actions-plan` (credential for pull requests, read-only roles) only plans, since a pull request can change the workflow that runs it. CI never applies `envs/shared`.
 
 One-time setup, after the first `envs/staging` apply (the role assignment on `bardery-staging` needs that resource group to exist). A fresh install applies `envs/shared` once before staging, as in the setup above: that first apply creates the identity too, so pass `-var staging_exists=false` to it (step 3), and apply again as below once staging exists:
 
@@ -70,11 +70,11 @@ One-time setup, after the first `envs/staging` apply (the role assignment on `ba
    terraform output github_actions
    ```
 
-2. Add the three values as repository _variables_ (they aren't secrets): _Settings → Secrets and variables → Actions → Variables_: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
-3. Create the GitHub environment `staging`: _Settings → Environments_. The deploy job runs in it, which is the `environment:staging` federated credential's subject.
+2. Add the three values as repository _variables_ (they aren't secrets): _Settings → Secrets and variables → Actions → Variables_: `AZURE_CLIENT_ID`, `AZURE_PLAN_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
+3. Create the GitHub environment `staging`: _Settings → Environments_. The deploy job runs in it, which is the `environment:staging` federated credential's subject. Under _Deployment branches and tags_, select _Selected branches and tags_ and allow only `main`, so a pull request can't use the write identity.
 4. Turn on secret scanning with push protection: _Settings → Advanced Security → Secret protection_, enable _Secret protection_ and _Push protection_.
 
-The identity's roles: Contributor on `bardery-staging`, DNS Zone Contributor on the `bardery.app` zone and Storage Blob Data Contributor on the state account. Additions, all read-only and only so a `shared` plan can refresh its resources: Reader on `bardery-shared` and on the state account, and the Microsoft Graph `Application.Read.All` role (applying it needs admin consent, so your account needs Privileged Role Administrator or Global Administrator).
+The write identity's roles: Contributor on `bardery-staging`, DNS Zone Contributor on the `bardery.app` zone and Storage Blob Data Contributor on the state account. The plan identity has only Reader on `bardery-shared`, `bardery-staging` and the state account, Storage Blob Data Reader on the state account, and the Graph role; plans run with `-lock=false` because it can't write the state lock. The write identity also has these additions, read-only and only so a `shared` apply can refresh its resources: Reader on `bardery-shared` and on the state account, and the Microsoft Graph `Application.Read.All` role (applying it needs admin consent, so your account needs Privileged Role Administrator or Global Administrator).
 
 ## Staging
 
