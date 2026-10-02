@@ -14,7 +14,7 @@ The state storage lives in its own resource group, outside Terraform, so no Terr
 ## Prerequisites
 
 - [Azure CLI](https://learn.microsoft.com/en-us/cli/azure/install-azure-cli-linux): `curl -sL https://aka.ms/InstallAzureCLIDeb | sudo bash`
-- [Terraform](https://developer.hashicorp.com/terraform/install) 1.16
+- [Terraform](https://developer.hashicorp.com/terraform/install) 1.16 (CI pins the same minor)
 - An Owner role on the subscription.
 
 ## One-time setup
@@ -77,6 +77,16 @@ One-time setup, after the first `envs/staging` apply (the role assignment on `ba
 4. Turn on secret scanning with push protection: _Settings → Advanced Security → Secret protection_, enable _Secret protection_ and _Push protection_.
 
 The write identity's roles: Contributor on `bardery-staging`, DNS Zone Contributor on the `bardery.app` zone and Storage Blob Data Contributor on the state account. The plan identity has only Reader on `bardery-shared`, `bardery-staging` and the state account, Storage Blob Data Reader on the state account, a custom role that only lists Container App secrets in `bardery-staging` (the azurerm provider needs it to refresh the app, so keep Container App secrets as Key Vault references, not values), and the Graph role; plans run with `-lock=false` because it can't write the state lock. The write identity also has these additions, read-only and only so a `shared` apply can refresh its resources: Reader on `bardery-shared` and on the state account, and the Microsoft Graph `Application.Read.All` role (applying it needs admin consent, so your account needs Privileged Role Administrator or Global Administrator).
+
+## Review decisions (#25)
+
+- **Apply (CI).** The deploy plans fresh, stops if the plan destroys or replaces anything, then applies that saved plan. It can't apply the plan from the pull request: that one came from the read-only identity, without the state lock, against a state that may have moved since. After a stop, read the plan and apply by hand.
+- **Repeated values stay.** Backend blocks can't use variables, so the state account name stays in each `versions.tf` (a prod root copies the block and changes `key`). The repository's OIDC subject IDs and the state account ID live once each, in `locals` in `envs/shared/github.tf`.
+- **`staging_exists` stays.** A root can't hold a role on a resource group another root hasn't created yet, and a data source would make every plan read it. It is a one-time switch for the first apply. Prod adds a `prod_exists` the same way.
+- **Two identities stay.** The write identity trusts `main` and the `staging` environment only, the plan identity trusts `pull_request` and is read-only, because a pull request can change the workflow that runs it. Prod adds a `prod` environment credential and a Contributor role on its group to the write identity, never to the plan identity.
+- **The secrets-lister role stays.** The azurerm provider lists Container App secrets on every refresh, which Reader doesn't allow. Scoped to staging, and prod needs another assignment of the same role. This is why Container App secrets are Key Vault references.
+- **The Graph role stays.** `Application.Read.All` lets a `shared` plan refresh the Entra objects. CI never applies `shared`, so only the plan runs there, and the write identity has it only to match.
+- **Lock files.** Each lock file should hold hashes for every platform in use. `terraform init` records only the current one, so after adding or upgrading a provider run, in each root: `terraform providers lock -platform=linux_amd64 -platform=linux_arm64 -platform=darwin_arm64 -platform=darwin_amd64 -platform=windows_amd64`. CI only needs `linux_amd64`, and Terraform accepts the registry's own checksums there, so a missing hash breaks developers, not CI.
 
 ## Staging
 

@@ -16,6 +16,13 @@ resource "azurerm_container_app_environment" "staging" {
   name                = "bardery-staging"
   location            = azurerm_resource_group.staging.location
   resource_group_name = azurerm_resource_group.staging.name
+
+  # Azure adds this profile to every environment, and the provider then wanted to remove it from
+  # the environment and the app (an in-place change on every plan). Declaring it matches Azure.
+  workload_profile {
+    name                  = "Consumption"
+    workload_profile_type = "Consumption"
+  }
 }
 
 # Serves apps/web with nginx. Q69 puts it on Static Web Apps, but westeurope, its only EU region,
@@ -25,6 +32,7 @@ resource "azurerm_container_app" "web" {
   container_app_environment_id = azurerm_container_app_environment.staging.id
   resource_group_name          = azurerm_resource_group.staging.name
   revision_mode                = "Single"
+  workload_profile_name        = "Consumption"
 
   template {
     container {

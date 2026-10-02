@@ -54,6 +54,8 @@ jobs:
 
       - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
+          # The roots' required_version, so CI never runs a newer minor than a developer's machine.
+          terraform_version: ~1.16
           terraform_wrapper: false
 
       - uses: terraform-linters/setup-tflint@6ffdbaa3be476b3431f7275c26966ef32ff60337 # v6.3.2
@@ -92,6 +94,8 @@ jobs:
 
       - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         with:
+          # The roots' required_version, so CI never runs a newer minor than a developer's machine.
+          terraform_version: ~1.16
           terraform_wrapper: false
 
       - run: terraform init -input=false
@@ -158,12 +162,26 @@ jobs:
       - uses: hashicorp/setup-terraform@dfe3c3f87815947d99a8997f908cb6525fc44e9e # v4.0.1
         if: steps.gate.outputs.current == 'true'
         with:
+          # The roots' required_version, so CI never runs a newer minor than a developer's machine.
+          terraform_version: ~1.16
           terraform_wrapper: false
 
       - run: terraform init -input=false
         if: steps.gate.outputs.current == 'true'
         working-directory: infra/envs/staging
-      - run: terraform apply -input=false -auto-approve -lock-timeout=300s
+      - run: terraform plan -input=false -lock-timeout=300s -out=tfplan
+        if: steps.gate.outputs.current == 'true'
+        working-directory: infra/envs/staging
+      # An unexpected destroy stops the deploy; do it by hand after reading the plan (infra/README.md).
+      - run: |
+          deletes=$(terraform show -json tfplan | jq -r '.resource_changes[] | select(.change.actions | index("delete")) | .address')
+          if [[ -n $deletes ]]; then
+            echo "::error::The plan destroys resources, so it needs a human:"$'\n'"$deletes"
+            exit 1
+          fi
+        if: steps.gate.outputs.current == 'true'
+        working-directory: infra/envs/staging
+      - run: terraform apply -input=false -lock-timeout=300s tfplan
         if: steps.gate.outputs.current == 'true'
         working-directory: infra/envs/staging
 
