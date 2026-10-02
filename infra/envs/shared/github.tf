@@ -3,7 +3,10 @@
 # Federated credentials mean no secret is stored anywhere.
 
 locals {
-  repository = "albert-schilling/bardery"
+  # This repository's OIDC subject claim carries immutable owner and repository IDs, not just
+  # names (e.g. `repo:albert-schilling@59568178/bardery@1383190090:pull_request`), and Entra
+  # matches the subject exactly. Find the format a run presents in the AADSTS700213 error.
+  repository = "albert-schilling@59568178/bardery@1383190090"
 }
 
 data "azurerm_client_config" "current" {}
