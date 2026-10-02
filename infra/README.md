@@ -43,6 +43,8 @@ The state storage lives in its own resource group, outside Terraform, so no Terr
    terraform output name_servers
    ```
 
+   `staging_exists=false` skips the roles on the `bardery-staging` resource group, because `envs/staging` creates that group and needs this zone first, so it doesn't exist yet. Without it the apply fails on those roles. You apply `envs/shared` again, without the flag, after staging exists (_CI/CD_ below).
+
    If `init` fails with a 403, the role assignment from step 2 hasn't applied yet. Wait a few minutes and retry.
 
 4. **Delegate the domain.** At united-domains, open _bardery.app → Nameserver_, choose your own nameservers, and enter the four from the output. They look like `ns1-0X.azure-dns.com.`; enter them without the trailing dot. Delegation can take up to 48 hours to spread, usually much less. Check it with:
@@ -70,7 +72,7 @@ One-time setup, after the first `envs/staging` apply (the role assignment on `ba
    terraform output github_actions
    ```
 
-2. Add the three values as repository _variables_ (they aren't secrets): _Settings → Secrets and variables → Actions → Variables_: `AZURE_CLIENT_ID`, `AZURE_PLAN_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
+2. Add the four values as repository _variables_ (they aren't secrets): _Settings → Secrets and variables → Actions → Variables_: `AZURE_CLIENT_ID`, `AZURE_PLAN_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
 3. Create the GitHub environment `staging`: _Settings → Environments_. The deploy job runs in it, which is the `environment:staging` federated credential's subject. Under _Deployment branches and tags_, select _Selected branches and tags_ and allow only `main`, so a pull request can't use the write identity.
 4. Turn on secret scanning with push protection: _Settings → Advanced Security → Secret protection_, enable _Secret protection_ and _Push protection_.
 
