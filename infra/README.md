@@ -39,9 +39,11 @@ The state storage lives in its own resource group, outside Terraform, so no Terr
    ```sh
    cd infra/envs/shared
    terraform init
-   terraform apply
+   terraform apply -var staging_exists=false
    terraform output name_servers
    ```
+
+   `staging_exists=false` skips the roles on the `bardery-staging` resource group, because `envs/staging` creates that group and needs this zone first, so it doesn't exist yet. Without it the apply fails on those roles. You apply `envs/shared` again, without the flag, after staging exists (_CI/CD_ below).
 
    If `init` fails with a 403, the role assignment from step 2 hasn't applied yet. Wait a few minutes and retry.
 
@@ -54,6 +56,27 @@ The state storage lives in its own resource group, outside Terraform, so no Terr
    Deleting the zone would give it new nameservers and break this delegation, so the zone has `prevent_destroy`.
 
 5. **Email forwarding** (Q93). Switching to your own nameservers deactivates united-domains' email service and locks its forwarding settings ("Bereich gesperrt"). Reactivate the email service for the domain, then create the forwardings for `hello@`, `privacy@` and `security@` and confirm each one from the email it sends to the target inbox. The MX, SPF and DMARC records united-domains asks for are already in `envs/shared/main.tf`.
+
+## CI/CD (GitHub Actions)
+
+`.github/workflows/ci.yml` runs the checks and `terraform plan` (posted as a PR comment) on pull requests, and on merge to `main` applies `envs/staging` and deploys the web app. It signs in to Azure through OIDC, so no Azure secret is stored. Two Entra applications in `envs/shared` keep pull requests away from write access: `bardery-github-actions` (credentials for `main` and the `staging` GitHub environment) applies and deploys, and `bardery-github-actions-plan` (credential for pull requests, read-only roles) only plans, since a pull request can change the workflow that runs it. CI never applies `envs/shared`.
+
+One-time setup, after the first `envs/staging` apply (the role assignment on `bardery-staging` needs that resource group to exist). A fresh install applies `envs/shared` once before staging, as in the setup above: that first apply creates the identity too, so pass `-var staging_exists=false` to it (step 3), and apply again as below once staging exists:
+
+1. Apply the identity. Your `az login` needs permission to create Entra applications (Application Developer or higher):
+
+   ```sh
+   cd infra/envs/shared
+   terraform init -upgrade   # adds the azuread provider to the lock file
+   terraform apply
+   terraform output github_actions
+   ```
+
+2. Add the four values as repository _variables_ (they aren't secrets): _Settings → Secrets and variables → Actions → Variables_: `AZURE_CLIENT_ID`, `AZURE_PLAN_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
+3. Create the GitHub environment `staging`: _Settings → Environments_. The deploy job runs in it, which is the `environment:staging` federated credential's subject. Under _Deployment branches and tags_, select _Selected branches and tags_ and allow only `main`, so a pull request can't use the write identity.
+4. Turn on secret scanning with push protection: _Settings → Advanced Security → Secret protection_, enable _Secret protection_ and _Push protection_.
+
+The write identity's roles: Contributor on `bardery-staging`, DNS Zone Contributor on the `bardery.app` zone and Storage Blob Data Contributor on the state account. The plan identity has only Reader on `bardery-shared`, `bardery-staging` and the state account, Storage Blob Data Reader on the state account, a custom role that only lists Container App secrets in `bardery-staging` (the azurerm provider needs it to refresh the app, so keep Container App secrets as Key Vault references, not values), and the Graph role; plans run with `-lock=false` because it can't write the state lock. The write identity also has these additions, read-only and only so a `shared` apply can refresh its resources: Reader on `bardery-shared` and on the state account, and the Microsoft Graph `Application.Read.All` role (applying it needs admin consent, so your account needs Privileged Role Administrator or Global Administrator).
 
 ## Staging
 
@@ -71,7 +94,7 @@ Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, d
 
    If the push says `denied`, the token lacks the scope (rerun the refresh) or you aren't logged in (check with `grep ghcr.io ~/.docker/config.json`). Without the GitHub CLI, use a personal access token (classic) with `write:packages` instead; GHCR rejects fine-grained tokens. From #4 on, CI pushes the image with the workflow's own `GITHUB_TOKEN` (`permissions: packages: write`), so this login is needed only for hand deploys.
 
-   Then make the package public, so Container Apps pulls it without credentials: on GitHub, open _Packages → bardery-web → Package settings → Change visibility_.
+   Then make the package public, so Container Apps pulls it without credentials: on GitHub, open _Packages → bardery-web → Package settings → Change visibility_. Also grant the workflow push access to the package, since CI's `GITHUB_TOKEN` can't push to a package pushed with a personal token otherwise: in the same settings, under _Manage Actions access_, add `albert-schilling/bardery` with the _Write_ role.
 
 2. **Create the environment**, once `envs/shared` is applied and the domain is delegated:
 
@@ -92,7 +115,7 @@ Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, d
 
    Azure renews the certificate on its own. Terraform ignores the binding, so `terraform plan` stays clean.
 
-4. **Deploy by hand** until CI does it (#4). Each deploy pushes an image tagged with the commit and points the app at it:
+4. **Deploy by hand** (CI does it since #4). Each deploy pushes an image tagged with the commit and points the app at it:
 
    ```sh
    pnpm nx build web
@@ -102,7 +125,7 @@ Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, d
    az containerapp update -n web -g bardery-staging --image "$TAG"
    ```
 
-   Terraform ignores the image, so a deploy doesn't show up as drift.
+   Terraform ignores the image, so a deploy doesn't show up as drift. Since #4, CI does all of this on every merge to `main`; hand deploys are only for emergencies.
 
 5. **Check it**: `https://staging.bardery.app` shows the page with a valid certificate, `https://staging.bardery.app/any/path` still serves it, and `terraform plan` shows no changes. The app scales to zero, so the first request after a quiet spell takes a few seconds.
 

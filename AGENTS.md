@@ -31,6 +31,7 @@ Node and pnpm versions are pinned in `.node-version` and `package.json`.
 - Nx projects keep their config in `project.json` and their source in `src/`.
 - Apps import across folders through an absolute alias (`~/` for `src/`, set in `tsconfig.json` and the Vite config); oxlint's `import/no-relative-parent-imports` fails `../` imports under `apps/`.
 - Config files stay close to tool defaults; each deviation gets a one-line comment saying why.
+- Before pushing a change to a workflow file, check that it parses (e.g. load it with a YAML parser) and look at the CI run on that push: an invalid workflow starts no jobs and shows only a failed run with nothing in it.
 - After a PR is merged, add a line to [`docs/harness-log.md`](docs/harness-log.md).
 
 ## Tooling notes
