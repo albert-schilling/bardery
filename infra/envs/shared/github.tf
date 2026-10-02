@@ -141,6 +141,30 @@ resource "azurerm_role_assignment" "github_plan_staging" {
   principal_id         = azuread_service_principal.github_plan.object_id
 }
 
+# The azurerm provider lists a Container App's secrets on every refresh, an action Reader doesn't
+# include. This role adds only that one, on the staging group. Trade-off: a pull request's plan can
+# then read those secrets, so Container App secrets should be Key Vault references, not values.
+resource "azurerm_role_definition" "container_app_secrets_lister" {
+  name  = "bardery-container-app-secrets-lister"
+  scope = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
+
+  description = "List Container App secrets, so terraform plan can refresh them."
+
+  permissions {
+    actions = ["Microsoft.App/containerApps/listSecrets/action"]
+  }
+
+  assignable_scopes = ["/subscriptions/${data.azurerm_client_config.current.subscription_id}"]
+}
+
+resource "azurerm_role_assignment" "github_plan_staging_secrets" {
+  count = var.staging_exists ? 1 : 0
+
+  scope              = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/bardery-staging"
+  role_definition_id = azurerm_role_definition.container_app_secrets_lister.role_definition_resource_id
+  principal_id       = azuread_service_principal.github_plan.object_id
+}
+
 resource "azurerm_role_assignment" "github_plan_state" {
   for_each = toset(["Reader", "Storage Blob Data Reader"])
 
