@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "include": ["**/*"],
+  "exclude": ["dist"],
+  "compilerOptions": {
+    "lib": ["ES2025"],
+    "types": ["node"],
+    // Nothing is emitted; tsdown builds the JavaScript.
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    // Lets source import across folders through `~/`; tsdown resolves it at build time.
+    "paths": {
+      "~/*": ["./src/*"]
+    },
+    "noEmit": true
+  }
+}

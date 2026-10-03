@@ -1,0 +1,10 @@
+# The context is the repository root; the image needs only the workspace manifests and the server.
+# BuildKit reads this file for this Dockerfile instead of a .dockerignore in the context.
+*
+!package.json
+!pnpm-lock.yaml
+!pnpm-workspace.yaml
+!tsconfig.base.json
+!apps/server/
+apps/server/node_modules/
+apps/server/dist/
