@@ -8,6 +8,10 @@ locals {
   # names (e.g. `repo:albert-schilling@59568178/bardery@1383190090:pull_request`), and Entra
   # matches the subject exactly. Find the format a run presents in the AADSTS700213 error.
   repository = "albert-schilling@59568178/bardery@1383190090"
+
+  # Not a data source or a reference: this root creates the roles on it before it exists
+  # (staging_exists), and a plan would need read access to look it up.
+  staging_scope = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/bardery-staging"
 }
 
 data "azurerm_client_config" "current" {}
@@ -49,7 +53,7 @@ variable "staging_exists" {
 resource "azurerm_role_assignment" "github_staging" {
   count = var.staging_exists ? 1 : 0
 
-  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/bardery-staging"
+  scope                = local.staging_scope
   role_definition_name = "Contributor"
   principal_id         = azuread_service_principal.github.object_id
 }
@@ -136,7 +140,7 @@ resource "azurerm_role_assignment" "github_plan_shared" {
 resource "azurerm_role_assignment" "github_plan_staging" {
   count = var.staging_exists ? 1 : 0
 
-  scope                = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/bardery-staging"
+  scope                = local.staging_scope
   role_definition_name = "Reader"
   principal_id         = azuread_service_principal.github_plan.object_id
 }
@@ -160,7 +164,7 @@ resource "azurerm_role_definition" "container_app_secrets_lister" {
 resource "azurerm_role_assignment" "github_plan_staging_secrets" {
   count = var.staging_exists ? 1 : 0
 
-  scope              = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/bardery-staging"
+  scope              = local.staging_scope
   role_definition_id = azurerm_role_definition.container_app_secrets_lister.role_definition_resource_id
   principal_id       = azuread_service_principal.github_plan.object_id
 }
