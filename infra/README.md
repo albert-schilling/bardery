@@ -2,12 +2,12 @@
 
 Terraform (`azurerm`) for everything on Azure, in `swedencentral` (ADR 0004).
 
-| Folder          | What it manages                                                                                                                                                     | State file        |
-| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| `bootstrap/`    | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state                                                   | —                 |
-| `envs/shared/`  | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records                                                                                         | `shared.tfstate`  |
-| `envs/staging/` | Resource group `bardery-staging`: the Container Apps environment, the `web` app serving `apps/web` at `staging.bardery.app`, and its DNS records in the shared zone | `staging.tfstate` |
-| `envs/prod/`    | Prod (not yet written)                                                                                                                                              | `prod.tfstate`    |
+| Folder          | What it manages                                                                                                                                                                                                                                                      | State file        |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| `bootstrap/`    | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state                                                                                                                                                    | —                 |
+| `envs/shared/`  | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records                                                                                                                                                                                          | `shared.tfstate`  |
+| `envs/staging/` | Resource group `bardery-staging`: the Container Apps environment, the Log Analytics workspace, the `web` app serving `apps/web` at `staging.bardery.app`, the `api` app serving `apps/server` at `api.staging.bardery.app`, and their DNS records in the shared zone | `staging.tfstate` |
+| `envs/prod/`    | Prod (not yet written)                                                                                                                                                                                                                                               | `prod.tfstate`    |
 
 The state storage lives in its own resource group, outside Terraform, so no Terraform root can delete the state it runs on. It allows Entra ID access only (no account keys), keeps blob versions and soft-deleted blobs for 30 days, and has a delete lock.
 
@@ -140,3 +140,22 @@ Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, d
 5. **Check it**: `https://staging.bardery.app` shows the page with a valid certificate, `https://staging.bardery.app/any/path` still serves it, and `terraform plan` shows no changes. The app scales to zero, so the first request after a quiet spell takes a few seconds.
 
 `pnpm nx test-image web` builds the image and checks that deep links serve the app and missing assets return 404. CI runs it too.
+
+## Staging api
+
+The `api` Container App runs `apps/server` from the public image `ghcr.io/albert-schilling/bardery-server` at `https://api.staging.bardery.app`, with min 0 replicas and startup, liveness and readiness probes on `/health`. Logs go to the `bardery-staging` Log Analytics workspace.
+
+**Who owns the image tag: CI.** Terraform sets only the first image (`:latest`) and ignores later changes (`ignore_changes` on the image), like the `web` app. On every merge to `main`, CI builds the image once, tags it with the commit SHA, pushes it to GHCR, attaches build provenance, points the app at it with `az containerapp update` and then checks that `/health` reports the merged commit SHA. So a deploy never shows up in `terraform plan`, and Terraform never rolls a deploy back. CI builds and pushes the image before the apply, because the first apply creates the app, which needs an image to start; it also pushes `latest` for that.
+
+One-time setup, after the first CI push of the image:
+
+1. Make the package public, so Container Apps pulls it without credentials: _Packages → bardery-server → Package settings → Change visibility_. Under _Manage Actions access_, add `albert-schilling/bardery` with the _Write_ role if the package was not created by CI. The first merge pushes the image but its apply may fail until the package is public.
+2. Apply `envs/staging` (CI does it on merge). The custom domain waits for the `asuid.api.staging` TXT record.
+3. Bind the managed certificate once; Azure renews it afterwards:
+
+   ```sh
+   az containerapp hostname bind --hostname api.staging.bardery.app -n api -g bardery-staging \
+     --environment bardery-staging --validation-method CNAME
+   ```
+
+4. Check it: `curl https://api.staging.bardery.app/health` returns the deployed commit SHA as `version`, and `terraform plan` shows no changes.
