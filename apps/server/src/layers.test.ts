@@ -40,12 +40,12 @@ async function lintImport(from: string, specifier: string): Promise<string> {
   }
 }
 
-describe("the server's layer rules (Q46)", () => {
+describe("the server's layer rules", () => {
   it.each([
     ["routers", "~/services/story"],
-    ["routers", "~/domain/storyline"],
     ["services", "~/repositories/part"],
     ["services", "~/providers/text-generator"],
+    ["services", "~/domain/storyline"],
     ["repositories", "~/db/schema"],
     ["jobs", "~/services/illustrate"],
     ["domain", "~/domain/age-band"],
@@ -57,9 +57,17 @@ describe("the server's layer rules (Q46)", () => {
     ["domain", "~/repositories/part"],
     ["domain", "~/config"],
     ["routers", "~/repositories/part"],
+    ["routers", "~/domain/storyline"],
     ["services", "~/routers/story"],
+    ["services", "~/prompts/part"],
+    ["services", "~/db/schema"],
     ["repositories", "~/services/story"],
+    ["repositories", "~/domain/storyline"],
+    ["providers", "~/prompts/part"],
+    ["prompts", "~/domain/age-band"],
+    ["db", "~/domain/age-band"],
     ["jobs", "~/providers/illustrator"],
+    ["jobs", "~/domain/storyline"],
   ])("stops %s/ importing %s", async (from, specifier) => {
     expect(await lintImport(from, specifier)).toContain("no-restricted-imports");
   });

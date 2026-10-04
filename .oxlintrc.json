@@ -15,8 +15,10 @@
       "plugins": ["import"],
       "rules": { "import/no-relative-parent-imports": "error" }
     },
-    // The server's layers (Q46): imports only go one way, routers → services → repositories, providers
-    // and domain. Each folder lists what it may import from `~/`; everything else under `~/` is an error.
+    // The server's layers, as decided in docs/grilling/2026-09-24-technical-session.md (Backend, Q46).
+    // Imports go one way: routers → services → repositories, providers and domain; jobs → services;
+    // repositories → db, for the schema their queries use. Every other folder imports nothing, until
+    // that decision says otherwise.
     {
       "files": ["apps/server/src/routers/**"],
       "rules": {
@@ -25,8 +27,8 @@
           {
             "patterns": [
               {
-                "group": ["~/**", "!~/routers/**", "!~/services/**", "!~/domain/**"],
-                "message": "routers/ may import only services/ and domain/ (Q46)."
+                "group": ["~/**", "!~/routers/**", "!~/services/**"],
+                "message": "routers/ may import only services/ (see the server's layers in .oxlintrc.json)."
               }
             ]
           }
@@ -46,11 +48,9 @@
                   "!~/services/**",
                   "!~/repositories/**",
                   "!~/providers/**",
-                  "!~/domain/**",
-                  "!~/prompts/**",
-                  "!~/db/**"
+                  "!~/domain/**"
                 ],
-                "message": "services/ may import only repositories/, providers/, domain/, prompts/ and db/ (Q46)."
+                "message": "services/ may import only repositories/, providers/ and domain/ (see the server's layers in .oxlintrc.json)."
               }
             ]
           }
@@ -65,8 +65,8 @@
           {
             "patterns": [
               {
-                "group": ["~/**", "!~/repositories/**", "!~/db/**", "!~/domain/**"],
-                "message": "repositories/ may import only db/ and domain/ (Q46)."
+                "group": ["~/**", "!~/repositories/**", "!~/db/**"],
+                "message": "repositories/ may import only db/ (see the server's layers in .oxlintrc.json)."
               }
             ]
           }
@@ -81,8 +81,8 @@
           {
             "patterns": [
               {
-                "group": ["~/**", "!~/providers/**", "!~/prompts/**", "!~/domain/**"],
-                "message": "providers/ may import only prompts/ and domain/ (Q46)."
+                "group": ["~/**", "!~/providers/**"],
+                "message": "providers/ imports no other folder (see the server's layers in .oxlintrc.json)."
               }
             ]
           }
@@ -97,8 +97,8 @@
           {
             "patterns": [
               {
-                "group": ["~/**", "!~/jobs/**", "!~/services/**", "!~/domain/**"],
-                "message": "jobs/ may import only services/ and domain/ (Q46)."
+                "group": ["~/**", "!~/jobs/**", "!~/services/**"],
+                "message": "jobs/ may import only services/ (see the server's layers in .oxlintrc.json)."
               }
             ]
           }
@@ -113,8 +113,8 @@
           {
             "patterns": [
               {
-                "group": ["~/**", "!~/prompts/**", "!~/domain/**"],
-                "message": "prompts/ may import only domain/ (Q46)."
+                "group": ["~/**", "!~/prompts/**"],
+                "message": "prompts/ imports no other folder (see the server's layers in .oxlintrc.json)."
               }
             ]
           }
@@ -129,8 +129,8 @@
           {
             "patterns": [
               {
-                "group": ["~/**", "!~/db/**", "!~/domain/**"],
-                "message": "db/ may import only domain/ (Q46)."
+                "group": ["~/**", "!~/db/**"],
+                "message": "db/ imports no other folder (see the server's layers in .oxlintrc.json)."
               }
             ]
           }
@@ -146,7 +146,7 @@
             "patterns": [
               {
                 "group": ["~/**", "!~/domain/**"],
-                "message": "domain/ imports no other folder (Q46)."
+                "message": "domain/ imports no other folder (see the server's layers in .oxlintrc.json)."
               }
             ]
           }

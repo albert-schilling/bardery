@@ -24,7 +24,8 @@ check() {
 
 check "GET /health" '{"status":"ok","version":"test-version"}' "$(curl --silent "$url/health")"
 check "runs as non-root" node "$(docker exec "$container" whoami)"
-check "has no dev dependencies" absent "$(docker exec "$container" sh -c 'test -e node_modules/tsdown && echo present || echo absent')"
+check "ships only the bundle" dist "$(docker exec "$container" ls)"
+check "has no npm" absent "$(docker exec "$container" sh -c 'command -v npm || echo absent')"
 # `docker stop` sends SIGTERM and waits 2 seconds before it kills; a kill would exit with 137.
 docker stop --time 2 "$container" > /dev/null
 check "exits cleanly on SIGTERM" 0 "$(docker inspect --format '{{.State.ExitCode}}' "$container")"
