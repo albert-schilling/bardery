@@ -1,0 +1,23 @@
+{
+  "name": "@bardery/server",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsdown --watch --on-success \"node dist/main.mjs\"",
+    "build": "tsdown",
+    "typecheck": "tsc",
+    "test": "vitest run",
+    "test-image": "./test-image.sh",
+    "lint": "oxlint"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.3",
+    "tsdown": "^0.23.0",
+    "vitest": "^5.0.3"
+  }
+}

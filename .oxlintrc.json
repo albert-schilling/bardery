@@ -14,6 +14,144 @@
       "files": ["apps/**"],
       "plugins": ["import"],
       "rules": { "import/no-relative-parent-imports": "error" }
+    },
+    // The server's layers, as decided in docs/grilling/2026-09-24-technical-session.md (Backend, Q46).
+    // Imports go one way: routers → services → repositories, providers and domain; jobs → services;
+    // repositories → db, for the schema their queries use. Every other folder imports nothing, until
+    // that decision says otherwise.
+    {
+      "files": ["apps/server/src/routers/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/routers/**", "!~/services/**"],
+                "message": "routers/ may import only services/ (see the server's layers in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/services/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "~/**",
+                  "!~/services/**",
+                  "!~/repositories/**",
+                  "!~/providers/**",
+                  "!~/domain/**"
+                ],
+                "message": "services/ may import only repositories/, providers/ and domain/ (see the server's layers in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/repositories/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/repositories/**", "!~/db/**"],
+                "message": "repositories/ may import only db/ (see the server's layers in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/providers/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/providers/**"],
+                "message": "providers/ imports no other folder (see the server's layers in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/jobs/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/jobs/**", "!~/services/**"],
+                "message": "jobs/ may import only services/ (see the server's layers in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/prompts/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/prompts/**"],
+                "message": "prompts/ imports no other folder (see the server's layers in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/db/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/db/**"],
+                "message": "db/ imports no other folder (see the server's layers in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "files": ["apps/server/src/domain/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["~/**", "!~/domain/**"],
+                "message": "domain/ imports no other folder (see the server's layers in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "ignorePatterns": [
