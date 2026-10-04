@@ -66,7 +66,7 @@ Answers below are final. Where an answer was revised during the session, only th
 
 ## Backend
 
-- **Q36**: TypeScript on Node LTS. A monolith with two process types, `api` and `worker`, from one codebase.
+- **Q36**: TypeScript on the Current release of Node, not only LTS. A monolith with two process types, `api` and `worker`, from one codebase.
 - **Q46 Layers (cut by layer, not by module)**: `apps/server/src/` holds:
   - `routers/`: tRPC; validate with Zod, check auth, call a service.
   - `services/`: orchestration and transactions.
