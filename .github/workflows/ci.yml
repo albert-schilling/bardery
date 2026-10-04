@@ -242,7 +242,7 @@ jobs:
         if: steps.gate.outputs.current == 'true'
       - run: |
           for _ in {1..30}; do
-            version=$(curl --silent --fail https://api.staging.bardery.app/health | jq -r .version || true)
+            version=$(curl --silent --fail --max-time 10 https://api.staging.bardery.app/health | jq -r .version || true)
             [[ $version == "$GITHUB_SHA" ]] && exit 0
             sleep 10
           done
