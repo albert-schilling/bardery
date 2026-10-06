@@ -15,6 +15,24 @@
       "plugins": ["import"],
       "rules": { "import/no-relative-parent-imports": "error" }
     },
+    // Every file of the server, including those outside the layer folders. The layer overrides below
+    // repeat this pattern, because a rule set in a later override replaces an earlier one.
+    {
+      "files": ["apps/server/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@bardery/client", "@bardery/client/**"],
+                "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
+    },
     // The server's layers, as decided in docs/grilling/2026-09-24-technical-session.md, Backend section.
     // Imports go one way: routers → services → repositories, providers and domain; jobs → services;
     // repositories → db, for the schema their queries use. Every other folder imports nothing, until
@@ -187,8 +205,8 @@
     },
     // The packages' allowed dependencies, as decided in docs/grilling/2026-09-24-technical-session.md,
     // Repo and tooling section: schemas → utils; the server uses schemas, utils and i18n, never client.
-    // The same rules sit in the Nx tags of each project.json. The server's rule against client lives in
-    // each layer override above, because a rule set in a later override replaces an earlier one.
+    // The same rules sit in the Nx tags of each project.json. The server's rule against client is the first
+    // server override above, repeated in each layer override.
     {
       "files": ["packages/shared/schemas/**"],
       "rules": {

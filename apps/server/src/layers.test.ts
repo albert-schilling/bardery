@@ -90,8 +90,8 @@ describe("the server's package rules", () => {
     expect(await lintImport("routers", "@bardery/schemas")).toBe("ok");
   });
 
-  it("stops the server importing @bardery/client", async () => {
-    expect(await lintImport("services", "@bardery/client")).toContain("no-restricted-imports");
+  it.each(["services", "routers", ""])("stops %j importing @bardery/client", async (from) => {
+    expect(await lintImport(from, "@bardery/client")).toContain("no-restricted-imports");
   });
 });
 

@@ -6,10 +6,15 @@ import type { AppRouter } from "@bardery/server/router";
 
 export const { TRPCProvider, useTRPC } = createTRPCContext<AppRouter>();
 
-/** The api's address, set when the web app is built; the local server by default. */
-export const apiUrl = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+/** The api's address, set when the web app is built. Only the dev server falls back to the local server. */
+function resolveApiUrl(): string {
+  const url =
+    import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "http://localhost:3000" : undefined);
+  if (url === undefined) throw new Error("VITE_API_URL was not set when this build was made");
+  return url;
+}
 
-export function createApiClient(url: string = apiUrl) {
+export function createApiClient(url: string = resolveApiUrl()) {
   return createTRPCClient<AppRouter>({
     links: [
       httpBatchLink({

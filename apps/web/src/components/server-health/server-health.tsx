@@ -8,16 +8,12 @@ export function ServerHealth() {
   const trpc = useTRPC();
   const health = useQuery(trpc.health.queryOptions());
 
-  if (health.isPending) return <p className="server-health">Asking the server…</p>;
-  if (health.isError)
-    return (
-      <p className="server-health" role="alert">
-        The server didn't answer.
-      </p>
-    );
+  // One region that stays in the page, so assistive technology announces its changing text.
   return (
-    <p className="server-health">
-      Server is {health.data.status}, version {health.data.version}
+    <p className="server-health" role="status">
+      {health.isPending && "Asking the server…"}
+      {health.isError && "The server didn't answer."}
+      {health.isSuccess && `Server is ${health.data.status}, version ${health.data.version}`}
     </p>
   );
 }

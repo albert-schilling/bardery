@@ -29,6 +29,6 @@ describe("Home", () => {
       }),
     });
 
-    expect(await screen.findByRole("alert")).toHaveTextContent("The server didn't answer.");
+    expect(await screen.findByText("The server didn't answer.")).toHaveAttribute("role", "status");
   });
 });
