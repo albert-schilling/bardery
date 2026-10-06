@@ -7,11 +7,18 @@ describe("loadConfig", () => {
     expect(loadConfig({ PORT: "8080", VERSION: "abc123" })).toEqual({
       PORT: 8080,
       VERSION: "abc123",
+      CORS_ORIGINS: [],
     });
   });
 
   it("defaults the port and version for local development", () => {
-    expect(loadConfig({})).toEqual({ PORT: 3000, VERSION: "dev" });
+    expect(loadConfig({})).toEqual({ PORT: 3000, VERSION: "dev", CORS_ORIGINS: [] });
+  });
+
+  it("splits the allowed CORS origins at commas", () => {
+    expect(
+      loadConfig({ CORS_ORIGINS: "https://a.example, https://b.example" }).CORS_ORIGINS,
+    ).toEqual(["https://a.example", "https://b.example"]);
   });
 
   it("rejects an invalid port, naming the variable", () => {

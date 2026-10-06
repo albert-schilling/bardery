@@ -124,6 +124,11 @@ resource "azurerm_container_app" "api" {
       cpu    = 0.25
       memory = "0.5Gi"
 
+      env {
+        name  = "CORS_ORIGINS"
+        value = "https://staging.bardery.app"
+      }
+
       startup_probe {
         transport = "HTTP"
         port      = 3000

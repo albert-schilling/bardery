@@ -9,10 +9,12 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN npm install --global "$(node --print 'require("./package.json").packageManager')"
 # The manifest comes before the source, so a change to the source alone reuses the cached install.
 COPY apps/server/package.json apps/server/
+COPY packages/shared/schemas/package.json packages/shared/schemas/
 # No install scripts: the root's `prepare` installs git hooks, and the server's dependencies need none.
 RUN pnpm install --frozen-lockfile --ignore-scripts --filter @bardery/server
 COPY tsconfig.base.json ./
 COPY apps/server/ apps/server/
+COPY packages/shared/schemas/ packages/shared/schemas/
 RUN pnpm --filter @bardery/server build
 
 FROM node:26.10.0-alpine@sha256:0b36e8c136b94cd4fcf02188228e76c31ad5872eef3fec8cbd2eee500cfd9e80

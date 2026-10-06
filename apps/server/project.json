@@ -2,5 +2,6 @@
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
   "name": "server",
   "projectType": "application",
-  "sourceRoot": "apps/server/src"
+  "sourceRoot": "apps/server/src",
+  "tags": ["scope:server"]
 }

@@ -11,7 +11,7 @@ describe("the api server", () => {
   });
 
   it("answers GET /health with its status and version", async () => {
-    server = await startServer({ PORT: 0, VERSION: "abc123" });
+    server = await startServer({ PORT: 0, VERSION: "abc123", CORS_ORIGINS: [] });
 
     const response = await fetch(`http://localhost:${server.port}/health`);
 
@@ -19,8 +19,38 @@ describe("the api server", () => {
     expect(await response.json()).toEqual({ status: "ok", version: "abc123" });
   });
 
+  it("answers the health procedure over tRPC", async () => {
+    server = await startServer({ PORT: 0, VERSION: "abc123", CORS_ORIGINS: [] });
+
+    const response = await fetch(`http://localhost:${server.port}/trpc/health`);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      result: { data: { status: "ok", version: "abc123" } },
+    });
+  });
+
+  it.each([
+    ["https://staging.bardery.app", true],
+    ["http://localhost:5173", true],
+    ["https://evil.example", false],
+  ])("CORS for origin %s: allowed %s, with credentials", async (origin, allowed) => {
+    server = await startServer({
+      PORT: 0,
+      VERSION: "abc123",
+      CORS_ORIGINS: ["https://staging.bardery.app"],
+    });
+
+    const response = await fetch(`http://localhost:${server.port}/trpc/health`, {
+      headers: { Origin: origin },
+    });
+
+    expect(response.headers.get("access-control-allow-origin")).toBe(allowed ? origin : null);
+    if (allowed) expect(response.headers.get("access-control-allow-credentials")).toBe("true");
+  });
+
   it("stops even while a client holds a keep-alive connection, and then refuses requests", async () => {
-    const running = await startServer({ PORT: 0, VERSION: "abc123" });
+    const running = await startServer({ PORT: 0, VERSION: "abc123", CORS_ORIGINS: [] });
     const url = `http://localhost:${running.port}/health`;
     // fetch keeps the connection open for reuse.
     await fetch(url);

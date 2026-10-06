@@ -6,5 +6,7 @@
 !pnpm-workspace.yaml
 !tsconfig.base.json
 !apps/server/
+!packages/shared/schemas/
 apps/server/node_modules/
 apps/server/dist/
+packages/shared/schemas/node_modules/

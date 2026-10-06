@@ -27,6 +27,10 @@
           {
             "patterns": [
               {
+                "group": ["@bardery/client", "@bardery/client/**"],
+                "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
+              },
+              {
                 "group": ["~/**", "!~/routers/**", "!~/services/**"],
                 "message": "routers/ may import only services/ (see the server's layers in .oxlintrc.json)."
               }
@@ -42,6 +46,10 @@
           "error",
           {
             "patterns": [
+              {
+                "group": ["@bardery/client", "@bardery/client/**"],
+                "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
+              },
               {
                 "group": [
                   "~/**",
@@ -65,6 +73,10 @@
           {
             "patterns": [
               {
+                "group": ["@bardery/client", "@bardery/client/**"],
+                "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
+              },
+              {
                 "group": ["~/**", "!~/repositories/**", "!~/db/**"],
                 "message": "repositories/ may import only db/ (see the server's layers in .oxlintrc.json)."
               }
@@ -80,6 +92,10 @@
           "error",
           {
             "patterns": [
+              {
+                "group": ["@bardery/client", "@bardery/client/**"],
+                "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
+              },
               {
                 "group": ["~/**", "!~/providers/**"],
                 "message": "providers/ imports no other folder (see the server's layers in .oxlintrc.json)."
@@ -97,6 +113,10 @@
           {
             "patterns": [
               {
+                "group": ["@bardery/client", "@bardery/client/**"],
+                "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
+              },
+              {
                 "group": ["~/**", "!~/jobs/**", "!~/services/**"],
                 "message": "jobs/ may import only services/ (see the server's layers in .oxlintrc.json)."
               }
@@ -112,6 +132,10 @@
           "error",
           {
             "patterns": [
+              {
+                "group": ["@bardery/client", "@bardery/client/**"],
+                "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
+              },
               {
                 "group": ["~/**", "!~/prompts/**"],
                 "message": "prompts/ imports no other folder (see the server's layers in .oxlintrc.json)."
@@ -129,6 +153,10 @@
           {
             "patterns": [
               {
+                "group": ["@bardery/client", "@bardery/client/**"],
+                "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
+              },
+              {
                 "group": ["~/**", "!~/db/**"],
                 "message": "db/ imports no other folder (see the server's layers in .oxlintrc.json)."
               }
@@ -145,8 +173,51 @@
           {
             "patterns": [
               {
+                "group": ["@bardery/client", "@bardery/client/**"],
+                "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
+              },
+              {
                 "group": ["~/**", "!~/domain/**"],
                 "message": "domain/ imports no other folder (see the server's layers in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    // The packages' allowed dependencies, as decided in docs/grilling/2026-09-24-technical-session.md,
+    // Repo and tooling section: schemas → utils; the server uses schemas, utils and i18n, never client.
+    // The same rules sit in the Nx tags of each project.json. The server's rule against client lives in
+    // each layer override above, because a rule set in a later override replaces an earlier one.
+    {
+      "files": ["packages/shared/schemas/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@bardery/**", "!@bardery/utils"],
+                "message": "schemas may import only @bardery/utils (see the package rules in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    // The web app gets the server's router type for its tRPC client and nothing else from the server:
+    // `import type` passes, any import that exists at runtime fails.
+    {
+      "files": ["apps/web/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@bardery/server", "@bardery/server/**"],
+                "allowTypeImports": true,
+                "message": "The web app may only `import type` from the server, never runtime code."
               }
             ]
           }
