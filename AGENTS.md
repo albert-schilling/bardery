@@ -31,8 +31,8 @@ Node and pnpm versions are pinned in `.node-version` and `package.json`.
 - Nx projects keep their config in `project.json` and their source in `src/`.
 - Apps import across folders through an absolute alias (`~/` for `src/`, set in `tsconfig.json` and the Vite config); oxlint's `import/no-relative-parent-imports` fails `../` imports under `apps/`.
 - Config files stay close to tool defaults; each deviation gets a one-line comment saying why.
+- Code and config comments say the reason in words and never cite a grilling question number (Q38); a reader without the session does not know what to do with it. If a comment needs a source, name the document.
 - Before pushing a change to a workflow file, check that it parses (e.g. load it with a YAML parser) and look at the CI run on that push: an invalid workflow starts no jobs and shows only a failed run with nothing in it.
-- Code and config cite a decision by its file and section (e.g. `docs/grilling/2026-09-24-technical-session.md`, Backend), not by a bare Q number; Q numbers are for issues and PRs.
 - After a PR is merged, add a line to [`docs/harness-log.md`](docs/harness-log.md).
 
 ## Tooling notes
