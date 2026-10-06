@@ -149,6 +149,7 @@ The `api` Container App runs `apps/server` from the public image `ghcr.io/albert
 
 One-time setup, after the first CI push of the image:
 
+0. Register the Log Analytics namespace once on the subscription (CI's identity can't, as it only has Contributor on `bardery-staging`): `az provider register --namespace Microsoft.OperationalInsights --wait`. Without it the first apply fails with `MissingSubscriptionRegistration`.
 1. Make the package public, so Container Apps pulls it without credentials: _Packages → bardery-server → Package settings → Change visibility_. Under _Manage Actions access_, add `albert-schilling/bardery` with the _Write_ role if the package was not created by CI. The first merge pushes the image but its apply may fail until the package is public.
 2. Apply `envs/staging` (CI does it on merge). The custom domain waits for the `asuid.api.staging` TXT record.
 3. Bind the managed certificate once; Azure renews it afterwards:
