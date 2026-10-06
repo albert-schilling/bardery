@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    # The Figma export is a design reference that is never installed or deployed, so
+    # Dependabot neither opens version nor security update pull requests for it.
+    exclude-paths:
+      - docs/design/figma-make-export/**
