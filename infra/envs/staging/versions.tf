@@ -20,5 +20,5 @@ terraform {
 # The subscription comes from ARM_SUBSCRIPTION_ID.
 provider "azurerm" {
   features {}
-  resource_providers_to_register = ["Microsoft.App", "Microsoft.Network"]
+  resource_providers_to_register = ["Microsoft.App", "Microsoft.Network", "Microsoft.OperationalInsights"]
 }
