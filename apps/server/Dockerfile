@@ -11,7 +11,9 @@ RUN npm install --global "$(node --print 'require("./package.json").packageManag
 COPY apps/server/package.json apps/server/
 COPY packages/shared/schemas/package.json packages/shared/schemas/
 # No install scripts: the root's `prepare` installs git hooks, and the server's dependencies need none.
-RUN pnpm install --frozen-lockfile --ignore-scripts --filter @bardery/server
+# The `...` also installs the workspace packages the server depends on; without it their own dependencies
+# are missing at build time and end up external to the bundle.
+RUN pnpm install --frozen-lockfile --ignore-scripts --filter "@bardery/server..."
 COPY tsconfig.base.json ./
 COPY apps/server/ apps/server/
 COPY packages/shared/schemas/ packages/shared/schemas/
