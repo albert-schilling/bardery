@@ -38,4 +38,5 @@ Node and pnpm versions are pinned in `.node-version` and `package.json`.
 ## Tooling notes
 
 - oxfmt formats SCSS and CSS (checked with oxfmt 0.70), so it owns formatting of styles; Stylelint only lints them.
-- A nested `.oxlintrc.json` replaces the root one instead of merging with it, so it must `extends` the root config.
+- A nested `.oxlintrc.json` replaces the root one instead of merging with it. Even with `extends` it loses the root's path-based `overrides`, so per-folder rules go in the root config with paths from the repo root.
+- oxlint's regexes (e.g. `no-restricted-imports` `regex` patterns) have no lookahead; a pattern with `(?!…)` silently matches nothing. Use `group` patterns with `!` negation instead.
