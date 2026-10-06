@@ -14,7 +14,8 @@
     // Lets route modules import their generated types from `./+types/<route>`.
     "rootDirs": [".", "./.react-router/types"],
     "paths": {
-      "~/*": ["./src/*"]
+      // The server's folder second: the web app typechecks the server's router, which imports through its own `~/`.
+      "~/*": ["./src/*", "../server/src/*"]
     },
     "noEmit": true
   }

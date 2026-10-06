@@ -20,8 +20,9 @@ export function createApiClient(url: string = resolveApiUrl()) {
       httpBatchLink({
         url: `${url}/trpc`,
         // Sends the session cookie across origins.
-        // tRPC's init type allows `signal: undefined`, which `exactOptionalPropertyTypes` rejects.
-        fetch: (input, init) => fetch(input, { ...init, credentials: "include" } as RequestInit),
+        // `signal: undefined` is how tRPC says "none", but `exactOptionalPropertyTypes` wants null.
+        fetch: (input, init) =>
+          fetch(input, { ...init, signal: init?.signal ?? null, credentials: "include" }),
       }),
     ],
   });

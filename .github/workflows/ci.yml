@@ -220,11 +220,15 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
         if: steps.gate.outputs.current == 'true'
+      - run: test -n "$VITE_API_URL" || { echo "::error::The staging environment variable API_URL is not set (infra/README.md)"; exit 1; }
+        if: steps.gate.outputs.current == 'true'
+        env:
+          VITE_API_URL: ${{ vars.API_URL }}
       - run: pnpm nx build web
         if: steps.gate.outputs.current == 'true'
         env:
-          # Compiled into the bundle: the browser calls this address.
-          VITE_API_URL: https://api.staging.bardery.app
+          # Compiled into the bundle: the browser calls this address. Set in the `staging` environment's variables.
+          VITE_API_URL: ${{ vars.API_URL }}
       - if: steps.gate.outputs.current == 'true'
         run: |
           docker build --platform linux/amd64 --tag "$IMAGE" apps/web

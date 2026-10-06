@@ -49,7 +49,7 @@
                 "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
               },
               {
-                "group": ["~/**", "!~/routers/**", "!~/services/**"],
+                "group": ["~/**", "!~/routers", "!~/routers/**", "!~/services", "!~/services/**"],
                 "message": "routers/ may import only services/ (see the server's layers in .oxlintrc.json)."
               }
             ]
@@ -71,9 +71,13 @@
               {
                 "group": [
                   "~/**",
+                  "!~/services",
                   "!~/services/**",
+                  "!~/repositories",
                   "!~/repositories/**",
+                  "!~/providers",
                   "!~/providers/**",
+                  "!~/domain",
                   "!~/domain/**"
                 ],
                 "message": "services/ may import only repositories/, providers/ and domain/ (see the server's layers in .oxlintrc.json)."
@@ -95,7 +99,7 @@
                 "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
               },
               {
-                "group": ["~/**", "!~/repositories/**", "!~/db/**"],
+                "group": ["~/**", "!~/repositories", "!~/repositories/**", "!~/db", "!~/db/**"],
                 "message": "repositories/ may import only db/ (see the server's layers in .oxlintrc.json)."
               }
             ]
@@ -115,7 +119,7 @@
                 "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
               },
               {
-                "group": ["~/**", "!~/providers/**"],
+                "group": ["~/**", "!~/providers", "!~/providers/**"],
                 "message": "providers/ imports no other folder (see the server's layers in .oxlintrc.json)."
               }
             ]
@@ -135,7 +139,7 @@
                 "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
               },
               {
-                "group": ["~/**", "!~/jobs/**", "!~/services/**"],
+                "group": ["~/**", "!~/jobs", "!~/jobs/**", "!~/services", "!~/services/**"],
                 "message": "jobs/ may import only services/ (see the server's layers in .oxlintrc.json)."
               }
             ]
@@ -155,7 +159,7 @@
                 "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
               },
               {
-                "group": ["~/**", "!~/prompts/**"],
+                "group": ["~/**", "!~/prompts", "!~/prompts/**"],
                 "message": "prompts/ imports no other folder (see the server's layers in .oxlintrc.json)."
               }
             ]
@@ -175,7 +179,7 @@
                 "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
               },
               {
-                "group": ["~/**", "!~/db/**"],
+                "group": ["~/**", "!~/db", "!~/db/**"],
                 "message": "db/ imports no other folder (see the server's layers in .oxlintrc.json)."
               }
             ]
@@ -195,7 +199,7 @@
                 "message": "The server never imports @bardery/client (see the package rules in .oxlintrc.json)."
               },
               {
-                "group": ["~/**", "!~/domain/**"],
+                "group": ["~/**", "!~/domain", "!~/domain/**"],
                 "message": "domain/ imports no other folder (see the server's layers in .oxlintrc.json)."
               }
             ]

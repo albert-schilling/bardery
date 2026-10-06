@@ -1,5 +1,5 @@
-import { health } from "./health";
-import { router } from "./trpc";
+import { health } from "~/routers/health";
+import { router } from "~/routers/trpc";
 
 export const appRouter = router({ health });
 

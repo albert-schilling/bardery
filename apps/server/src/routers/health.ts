@@ -1,6 +1,6 @@
 import { healthSchema } from "@bardery/schemas";
 
-import { publicProcedure } from "./trpc";
+import { publicProcedure } from "~/routers/trpc";
 
 export const health = publicProcedure
   .output(healthSchema)

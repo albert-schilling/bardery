@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { appRouter } from "./index";
+import { appRouter } from "~/routers";
 
 describe("health", () => {
   it("answers with its status and the running version", async () => {

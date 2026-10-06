@@ -33,12 +33,13 @@ describe("the api server", () => {
   it.each([
     ["https://staging.bardery.app", true],
     ["http://localhost:5173", true],
+    ["http://localhost:4000", false],
     ["https://evil.example", false],
   ])("CORS for origin %s: allowed %s, with credentials", async (origin, allowed) => {
     server = await startServer({
       PORT: 0,
       VERSION: "abc123",
-      CORS_ORIGINS: ["https://staging.bardery.app"],
+      CORS_ORIGINS: ["https://staging.bardery.app", "http://localhost:5173"],
     });
 
     const response = await fetch(`http://localhost:${server.port}/trpc/health`, {
