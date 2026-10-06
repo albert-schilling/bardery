@@ -31,10 +31,12 @@ Node and pnpm versions are pinned in `.node-version` and `package.json`.
 - Nx projects keep their config in `project.json` and their source in `src/`.
 - Apps import across folders through an absolute alias (`~/` for `src/`, set in `tsconfig.json` and the Vite config); oxlint's `import/no-relative-parent-imports` fails `../` imports under `apps/`.
 - Config files stay close to tool defaults; each deviation gets a one-line comment saying why.
+- Code and config comments say the reason in words and never cite a grilling question number (Q38); a reader without the session does not know what to do with it. If a comment needs a source, name the document.
 - Before pushing a change to a workflow file, check that it parses (e.g. load it with a YAML parser) and look at the CI run on that push: an invalid workflow starts no jobs and shows only a failed run with nothing in it.
 - After a PR is merged, add a line to [`docs/harness-log.md`](docs/harness-log.md).
 
 ## Tooling notes
 
 - oxfmt formats SCSS and CSS (checked with oxfmt 0.70), so it owns formatting of styles; Stylelint only lints them.
-- A nested `.oxlintrc.json` replaces the root one instead of merging with it, so it must `extends` the root config.
+- A nested `.oxlintrc.json` replaces the root one instead of merging with it. Even with `extends` it loses the root's path-based `overrides`, so per-folder rules go in the root config with paths from the repo root.
+- oxlint's regexes (e.g. `no-restricted-imports` `regex` patterns) have no lookahead; a pattern with `(?!…)` silently matches nothing. Use `group` patterns with `!` negation instead.

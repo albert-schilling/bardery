@@ -19,11 +19,13 @@ resource "azurerm_log_analytics_workspace" "staging" {
   retention_in_days   = 30
 }
 
-# One Container Apps environment per environment, on the consumption plan.
+# One Container Apps environment per environment, on the consumption plan. The provider accepts a
+# workspace only when logs_destination is log-analytics, so that is set explicitly.
 resource "azurerm_container_app_environment" "staging" {
   name                       = "bardery-staging"
   location                   = azurerm_resource_group.staging.location
   resource_group_name        = azurerm_resource_group.staging.name
+  logs_destination           = "log-analytics"
   log_analytics_workspace_id = azurerm_log_analytics_workspace.staging.id
 
   # Azure adds this profile to every environment, and the provider then wanted to remove it from

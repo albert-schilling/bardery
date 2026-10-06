@@ -15,7 +15,7 @@
       "plugins": ["import"],
       "rules": { "import/no-relative-parent-imports": "error" }
     },
-    // The server's layers, as decided in docs/grilling/2026-09-24-technical-session.md (Backend, Q46).
+    // The server's layers, as decided in docs/grilling/2026-09-24-technical-session.md, Backend section.
     // Imports go one way: routers → services → repositories, providers and domain; jobs → services;
     // repositories → db, for the schema their queries use. Every other folder imports nothing, until
     // that decision says otherwise.
