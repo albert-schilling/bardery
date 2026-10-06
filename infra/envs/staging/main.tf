@@ -1,4 +1,4 @@
-# The staging environment (Q73).
+# The staging environment.
 
 resource "azurerm_resource_group" "staging" {
   name     = "bardery-staging"
@@ -19,7 +19,7 @@ resource "azurerm_log_analytics_workspace" "staging" {
   retention_in_days   = 30
 }
 
-# Q38: one Container Apps environment per environment, on the consumption plan.
+# One Container Apps environment per environment, on the consumption plan.
 resource "azurerm_container_app_environment" "staging" {
   name                       = "bardery-staging"
   location                   = azurerm_resource_group.staging.location
@@ -34,7 +34,7 @@ resource "azurerm_container_app_environment" "staging" {
   }
 }
 
-# Serves apps/web with nginx. Q69 puts it on Static Web Apps, but westeurope, its only EU region,
+# Serves apps/web with nginx. docs/grilling/2026-09-24-technical-session.md puts it on Static Web Apps, but westeurope, its only EU region,
 # doesn't accept new customers, so this stands in until #22 moves it back.
 resource "azurerm_container_app" "web" {
   name                         = "web"
@@ -103,7 +103,7 @@ resource "azurerm_container_app_custom_domain" "web" {
   }
 }
 
-# The server (apps/server) at api.staging.bardery.app. Min 0 replicas in staging (Q38); the first
+# The server (apps/server) at api.staging.bardery.app. Min 0 replicas in staging; the first
 # request after a quiet spell waits for a cold start.
 resource "azurerm_container_app" "api" {
   name                         = "api"
