@@ -73,7 +73,7 @@ One-time setup, after the first `envs/staging` apply (the role assignment on `ba
    ```
 
 2. Add the four values as repository _variables_ (they aren't secrets): _Settings → Secrets and variables → Actions → Variables_: `AZURE_CLIENT_ID`, `AZURE_PLAN_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
-3. Create the GitHub environment `staging`: _Settings → Environments_. The deploy job runs in it, which is the `environment:staging` federated credential's subject. Under _Deployment branches and tags_, select _Selected branches and tags_ and allow only `main`, so a pull request can't use the write identity.
+3. Create the GitHub environment `staging`: _Settings → Environments_. The deploy job runs in it, which is the `environment:staging` federated credential's subject. Under _Deployment branches and tags_, select _Selected branches and tags_ and allow only `main`, so a pull request can't use the write identity. In the same environment, add the variable `API_URL` = `https://api.staging.bardery.app`: the deploy compiles it into the web app as `VITE_API_URL`, and fails if it is missing.
 4. Turn on secret scanning with push protection: _Settings → Advanced Security → Secret protection_, enable _Secret protection_ and _Push protection_.
 
 The write identity's roles: Contributor on `bardery-staging`, DNS Zone Contributor on the `bardery.app` zone and Storage Blob Data Contributor on the state account. The plan identity has only Reader on `bardery-shared`, `bardery-staging` and the state account, Storage Blob Data Reader on the state account, a custom role that only lists Container App secrets in `bardery-staging` (the azurerm provider needs it to refresh the app, so keep Container App secrets as Key Vault references, not values), and the Graph role; plans run with `-lock=false` because it can't write the state lock. The write identity also has these additions, read-only and only so a `shared` apply can refresh its resources: Reader on `bardery-shared` and on the state account, and the Microsoft Graph `Application.Read.All` role (applying it needs admin consent, so your account needs Privileged Role Administrator or Global Administrator).
@@ -97,7 +97,7 @@ Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, d
    ```sh
    gh auth refresh -s write:packages
    gh auth token | docker login ghcr.io -u albert-schilling --password-stdin
-   pnpm nx build web
+   VITE_API_URL=https://api.staging.bardery.app pnpm nx build web
    docker build --platform linux/amd64 -t ghcr.io/albert-schilling/bardery-web:latest apps/web
    docker push ghcr.io/albert-schilling/bardery-web:latest
    ```
@@ -128,7 +128,7 @@ Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, d
 4. **Deploy by hand** (CI does it since #4). Each deploy pushes an image tagged with the commit and points the app at it:
 
    ```sh
-   pnpm nx build web
+   VITE_API_URL=https://api.staging.bardery.app pnpm nx build web
    TAG=ghcr.io/albert-schilling/bardery-web:$(git rev-parse --short HEAD)
    docker build --platform linux/amd64 -t "$TAG" apps/web
    docker push "$TAG"

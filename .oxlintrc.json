@@ -15,6 +15,32 @@
       "plugins": ["import"],
       "rules": { "import/no-relative-parent-imports": "error" }
     },
+    // Every file of the server, including those outside the layer folders. The layer overrides below
+    // repeat this pattern, because a rule set in a later override replaces an earlier one.
+    {
+      "files": ["apps/server/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": [
+                  "@bardery/**",
+                  "!@bardery/schemas",
+                  "!@bardery/schemas/**",
+                  "!@bardery/utils",
+                  "!@bardery/utils/**",
+                  "!@bardery/i18n",
+                  "!@bardery/i18n/**"
+                ],
+                "message": "The server may import only @bardery/schemas, utils and i18n (see the package rules in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
+    },
     // The server's layers, as decided in docs/grilling/2026-09-24-technical-session.md, Backend section.
     // Imports go one way: routers → services → repositories, providers and domain; jobs → services;
     // repositories → db, for the schema their queries use. Every other folder imports nothing, until
@@ -27,7 +53,19 @@
           {
             "patterns": [
               {
-                "group": ["~/**", "!~/routers/**", "!~/services/**"],
+                "group": [
+                  "@bardery/**",
+                  "!@bardery/schemas",
+                  "!@bardery/schemas/**",
+                  "!@bardery/utils",
+                  "!@bardery/utils/**",
+                  "!@bardery/i18n",
+                  "!@bardery/i18n/**"
+                ],
+                "message": "The server may import only @bardery/schemas, utils and i18n (see the package rules in .oxlintrc.json)."
+              },
+              {
+                "group": ["~/**", "!~/routers", "!~/routers/**", "!~/services", "!~/services/**"],
                 "message": "routers/ may import only services/ (see the server's layers in .oxlintrc.json)."
               }
             ]
@@ -44,10 +82,26 @@
             "patterns": [
               {
                 "group": [
+                  "@bardery/**",
+                  "!@bardery/schemas",
+                  "!@bardery/schemas/**",
+                  "!@bardery/utils",
+                  "!@bardery/utils/**",
+                  "!@bardery/i18n",
+                  "!@bardery/i18n/**"
+                ],
+                "message": "The server may import only @bardery/schemas, utils and i18n (see the package rules in .oxlintrc.json)."
+              },
+              {
+                "group": [
                   "~/**",
+                  "!~/services",
                   "!~/services/**",
+                  "!~/repositories",
                   "!~/repositories/**",
+                  "!~/providers",
                   "!~/providers/**",
+                  "!~/domain",
                   "!~/domain/**"
                 ],
                 "message": "services/ may import only repositories/, providers/ and domain/ (see the server's layers in .oxlintrc.json)."
@@ -65,7 +119,19 @@
           {
             "patterns": [
               {
-                "group": ["~/**", "!~/repositories/**", "!~/db/**"],
+                "group": [
+                  "@bardery/**",
+                  "!@bardery/schemas",
+                  "!@bardery/schemas/**",
+                  "!@bardery/utils",
+                  "!@bardery/utils/**",
+                  "!@bardery/i18n",
+                  "!@bardery/i18n/**"
+                ],
+                "message": "The server may import only @bardery/schemas, utils and i18n (see the package rules in .oxlintrc.json)."
+              },
+              {
+                "group": ["~/**", "!~/repositories", "!~/repositories/**", "!~/db", "!~/db/**"],
                 "message": "repositories/ may import only db/ (see the server's layers in .oxlintrc.json)."
               }
             ]
@@ -81,7 +147,19 @@
           {
             "patterns": [
               {
-                "group": ["~/**", "!~/providers/**"],
+                "group": [
+                  "@bardery/**",
+                  "!@bardery/schemas",
+                  "!@bardery/schemas/**",
+                  "!@bardery/utils",
+                  "!@bardery/utils/**",
+                  "!@bardery/i18n",
+                  "!@bardery/i18n/**"
+                ],
+                "message": "The server may import only @bardery/schemas, utils and i18n (see the package rules in .oxlintrc.json)."
+              },
+              {
+                "group": ["~/**", "!~/providers", "!~/providers/**"],
                 "message": "providers/ imports no other folder (see the server's layers in .oxlintrc.json)."
               }
             ]
@@ -97,7 +175,19 @@
           {
             "patterns": [
               {
-                "group": ["~/**", "!~/jobs/**", "!~/services/**"],
+                "group": [
+                  "@bardery/**",
+                  "!@bardery/schemas",
+                  "!@bardery/schemas/**",
+                  "!@bardery/utils",
+                  "!@bardery/utils/**",
+                  "!@bardery/i18n",
+                  "!@bardery/i18n/**"
+                ],
+                "message": "The server may import only @bardery/schemas, utils and i18n (see the package rules in .oxlintrc.json)."
+              },
+              {
+                "group": ["~/**", "!~/jobs", "!~/jobs/**", "!~/services", "!~/services/**"],
                 "message": "jobs/ may import only services/ (see the server's layers in .oxlintrc.json)."
               }
             ]
@@ -113,7 +203,19 @@
           {
             "patterns": [
               {
-                "group": ["~/**", "!~/prompts/**"],
+                "group": [
+                  "@bardery/**",
+                  "!@bardery/schemas",
+                  "!@bardery/schemas/**",
+                  "!@bardery/utils",
+                  "!@bardery/utils/**",
+                  "!@bardery/i18n",
+                  "!@bardery/i18n/**"
+                ],
+                "message": "The server may import only @bardery/schemas, utils and i18n (see the package rules in .oxlintrc.json)."
+              },
+              {
+                "group": ["~/**", "!~/prompts", "!~/prompts/**"],
                 "message": "prompts/ imports no other folder (see the server's layers in .oxlintrc.json)."
               }
             ]
@@ -129,7 +231,19 @@
           {
             "patterns": [
               {
-                "group": ["~/**", "!~/db/**"],
+                "group": [
+                  "@bardery/**",
+                  "!@bardery/schemas",
+                  "!@bardery/schemas/**",
+                  "!@bardery/utils",
+                  "!@bardery/utils/**",
+                  "!@bardery/i18n",
+                  "!@bardery/i18n/**"
+                ],
+                "message": "The server may import only @bardery/schemas, utils and i18n (see the package rules in .oxlintrc.json)."
+              },
+              {
+                "group": ["~/**", "!~/db", "!~/db/**"],
                 "message": "db/ imports no other folder (see the server's layers in .oxlintrc.json)."
               }
             ]
@@ -145,8 +259,59 @@
           {
             "patterns": [
               {
-                "group": ["~/**", "!~/domain/**"],
+                "group": [
+                  "@bardery/**",
+                  "!@bardery/schemas",
+                  "!@bardery/schemas/**",
+                  "!@bardery/utils",
+                  "!@bardery/utils/**",
+                  "!@bardery/i18n",
+                  "!@bardery/i18n/**"
+                ],
+                "message": "The server may import only @bardery/schemas, utils and i18n (see the package rules in .oxlintrc.json)."
+              },
+              {
+                "group": ["~/**", "!~/domain", "!~/domain/**"],
                 "message": "domain/ imports no other folder (see the server's layers in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    // The packages' allowed dependencies, as decided in docs/grilling/2026-09-24-technical-session.md,
+    // Repo and tooling section: schemas → utils; the server uses schemas, utils and i18n only.
+    // The same rules sit in the Nx tags of each project.json. The server's allowlist is the first server
+    // override above, repeated in each layer override.
+    {
+      "files": ["packages/shared/schemas/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@bardery/**", "!@bardery/utils"],
+                "message": "schemas may import only @bardery/utils (see the package rules in .oxlintrc.json)."
+              }
+            ]
+          }
+        ]
+      }
+    },
+    // The web app gets the server's router type for its tRPC client and nothing else from the server:
+    // `import type` passes, any import that exists at runtime fails.
+    {
+      "files": ["apps/web/**"],
+      "rules": {
+        "no-restricted-imports": [
+          "error",
+          {
+            "patterns": [
+              {
+                "group": ["@bardery/server", "@bardery/server/**"],
+                "allowTypeImports": true,
+                "message": "The web app may only `import type` from the server, never runtime code."
               }
             ]
           }

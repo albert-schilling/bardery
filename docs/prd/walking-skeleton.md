@@ -83,4 +83,4 @@ Every issue is written so that a coding agent can do it without further briefing
 
 ## Harness log
 
-After each merged PR, add one line to [`docs/harness-log.md`](../harness-log.md): what the agent got wrong or needed to be told, and what changed in the harness so it won't happen again, such as a line in `AGENTS.md`, a lint rule, a test or a skill. Prefer a check over a sentence, because agents follow checks reliably.
+In each PR, add its lines to [`docs/harness-log.md`](../harness-log.md), in a commit after the PR is opened so they carry its number: what the agent got wrong or needed to be told, and what changed in the harness so it won't happen again, such as a line in `AGENTS.md`, a lint rule, a test or a skill. Prefer a check over a sentence, because agents follow checks reliably.

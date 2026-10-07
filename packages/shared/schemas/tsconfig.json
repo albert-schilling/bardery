@@ -1,0 +1,13 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "include": ["**/*"],
+  "compilerOptions": {
+    "lib": ["ES2025"],
+    "types": [],
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    // Nothing is emitted; the apps compile this package's source.
+    "noEmit": true
+  }
+}

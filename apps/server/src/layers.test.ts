@@ -27,6 +27,18 @@ afterAll(async () => {
   await rm(workspace, { recursive: true, force: true });
 });
 
+async function lintSource(dir: string, source: string): Promise<string> {
+  await mkdir(join(workspace, dir), { recursive: true });
+  const file = join(workspace, dir, "probe.ts");
+  await writeFile(file, source);
+  try {
+    await promisify(execFile)(oxlint, [file], { cwd: workspace });
+    return "ok";
+  } catch (error) {
+    return String((error as { stdout: string }).stdout);
+  }
+}
+
 async function lintImport(from: string, specifier: string): Promise<string> {
   const dir = join(workspace, "apps/server/src", from);
   await mkdir(dir, { recursive: true });
@@ -70,5 +82,46 @@ describe("the server's layer rules", () => {
     ["jobs", "~/domain/storyline"],
   ])("stops %s/ importing %s", async (from, specifier) => {
     expect(await lintImport(from, specifier)).toContain("no-restricted-imports");
+  });
+});
+
+describe("the server's package rules", () => {
+  it("lets the server import @bardery/schemas", async () => {
+    expect(await lintImport("routers", "@bardery/schemas")).toBe("ok");
+  });
+
+  it.each(["services", "routers", ""])("lets %j import utils and i18n", async (from) => {
+    expect(await lintImport(from, "@bardery/utils")).toBe("ok");
+    expect(await lintImport(from, "@bardery/i18n")).toBe("ok");
+  });
+
+  it.each(["services", "routers", ""])("stops %j importing other packages", async (from) => {
+    for (const specifier of ["@bardery/client", "@bardery/web"]) {
+      expect(await lintImport(from, specifier)).toContain("no-restricted-imports");
+    }
+  });
+});
+
+// The rules for the packages and the web app live here too: this is the one place that lints probe files.
+describe("the web app's boundary to the server", () => {
+  it("lets the web app import a type from the server", async () => {
+    const source =
+      'import type { AppRouter } from "@bardery/server/router";\nexport type T = AppRouter;\n';
+    expect(await lintSource("apps/web/src", source)).toBe("ok");
+  });
+
+  it("stops the web app importing a runtime value from the server", async () => {
+    const source =
+      'import { appRouter } from "@bardery/server/router";\nexport const r = appRouter;\n';
+    expect(await lintSource("apps/web/src", source)).toContain("no-restricted-imports");
+  });
+});
+
+describe("the schemas package's dependencies", () => {
+  it("stops @bardery/schemas importing the server's other packages", async () => {
+    const source = 'export * from "@bardery/client";\n';
+    expect(await lintSource("packages/shared/schemas/src", source)).toContain(
+      "no-restricted-imports",
+    );
   });
 });

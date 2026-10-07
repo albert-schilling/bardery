@@ -161,6 +161,20 @@ jobs:
             echo "current=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # Checked before anything is pushed or applied, so a missing variable can't leave a partial release.
+      - run: |
+          if [[ -z $VITE_API_URL ]]; then
+            echo "::error::The staging environment variable API_URL is not set (infra/README.md)"
+            exit 1
+          fi
+          if [[ $VITE_API_URL == */ ]]; then
+            echo "::error::API_URL must not end with a slash: $VITE_API_URL"
+            exit 1
+          fi
+        if: steps.gate.outputs.current == 'true'
+        env:
+          VITE_API_URL: ${{ vars.API_URL }}
+
       # The server image is built once here, before Terraform: a first apply creates the api app,
       # which needs an image to start. `latest` only serves that first apply; deploys use the SHA tag.
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -222,6 +236,9 @@ jobs:
         if: steps.gate.outputs.current == 'true'
       - run: pnpm nx build web
         if: steps.gate.outputs.current == 'true'
+        env:
+          # Compiled into the bundle: the browser calls this address. Set in the `staging` environment's variables.
+          VITE_API_URL: ${{ vars.API_URL }}
       - if: steps.gate.outputs.current == 'true'
         run: |
           docker build --platform linux/amd64 --tag "$IMAGE" apps/web

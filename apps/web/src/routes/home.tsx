@@ -1,3 +1,4 @@
+import { ServerHealth } from "~/components/server-health/server-health";
 import { Greeting } from "~/components/greeting/greeting";
 
 export function meta() {
@@ -8,6 +9,7 @@ export default function Home() {
   return (
     <main>
       <Greeting name="Bardery" large />
+      <ServerHealth />
     </main>
   );
 }
