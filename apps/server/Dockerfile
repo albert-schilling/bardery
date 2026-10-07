@@ -27,7 +27,7 @@ ARG VERSION
 ENV NODE_ENV=production VERSION=${VERSION}
 WORKDIR /app
 # The build bundles the dependencies, so the image needs no node_modules.
-COPY --from=build /repo/apps/server/dist dist
+COPY --from=build /repo/apps/server/dist/main.mjs dist/main.mjs
 # The `node` user comes with the base image.
 USER node
 EXPOSE 3000

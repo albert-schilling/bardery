@@ -117,13 +117,6 @@ describe("the web app's boundary to the server", () => {
   });
 });
 
-describe("the web app's alias for the server's router", () => {
-  it("is not importable at runtime or as a type", async () => {
-    const source = 'import type { AppRouter } from "~/routers";\nexport type T = AppRouter;\n';
-    expect(await lintSource("apps/web/src", source)).toContain("no-restricted-imports");
-  });
-});
-
 describe("the schemas package's dependencies", () => {
   it("stops @bardery/schemas importing the server's other packages", async () => {
     const source = 'export * from "@bardery/client";\n';

@@ -3,5 +3,9 @@
   // Nx Cloud remote caching is out of scope for the walking skeleton; this also stops Nx from offering it.
   "neverConnectToCloud": true,
   // Opts out of the anonymous usage data Nx otherwise asks about on its first run.
-  "analytics": false
+  "analytics": false,
+  "targetDefaults": {
+    // The web app typechecks against the server's built router types (apps/server/tsdown.config.ts).
+    "typecheck": { "dependsOn": ["^build"] }
+  }
 }

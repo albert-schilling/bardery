@@ -312,11 +312,6 @@
                 "group": ["@bardery/server", "@bardery/server/**"],
                 "allowTypeImports": true,
                 "message": "The web app may only `import type` from the server, never runtime code."
-              },
-              {
-                // The `~/routers` alias exists in the web app's tsconfig only so it can typecheck the server's router.
-                "group": ["~/routers", "~/routers/**"],
-                "message": "The web app imports the server's router only as a type, from @bardery/server/router."
               }
             ]
           }

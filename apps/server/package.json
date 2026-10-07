@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./router": "./src/routers/index.ts"
+    "./router": {
+      "types": "./dist/router.d.mts"
+    }
   },
   "scripts": {
     "dev": "tsdown --watch --on-success \"node dist/main.mjs\"",
