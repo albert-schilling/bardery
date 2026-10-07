@@ -162,7 +162,15 @@ jobs:
           fi
 
       # Checked before anything is pushed or applied, so a missing variable can't leave a partial release.
-      - run: test -n "$VITE_API_URL" || { echo "::error::The staging environment variable API_URL is not set (infra/README.md)"; exit 1; }
+      - run: |
+          if [[ -z $VITE_API_URL ]]; then
+            echo "::error::The staging environment variable API_URL is not set (infra/README.md)"
+            exit 1
+          fi
+          if [[ $VITE_API_URL == */ ]]; then
+            echo "::error::API_URL must not end with a slash: $VITE_API_URL"
+            exit 1
+          fi
         if: steps.gate.outputs.current == 'true'
         env:
           VITE_API_URL: ${{ vars.API_URL }}
