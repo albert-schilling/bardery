@@ -161,6 +161,12 @@ jobs:
             echo "current=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # Checked before anything is pushed or applied, so a missing variable can't leave a partial release.
+      - run: test -n "$VITE_API_URL" || { echo "::error::The staging environment variable API_URL is not set (infra/README.md)"; exit 1; }
+        if: steps.gate.outputs.current == 'true'
+        env:
+          VITE_API_URL: ${{ vars.API_URL }}
+
       # The server image is built once here, before Terraform: a first apply creates the api app,
       # which needs an image to start. `latest` only serves that first apply; deploys use the SHA tag.
       - uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
@@ -220,10 +226,6 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
         if: steps.gate.outputs.current == 'true'
-      - run: test -n "$VITE_API_URL" || { echo "::error::The staging environment variable API_URL is not set (infra/README.md)"; exit 1; }
-        if: steps.gate.outputs.current == 'true'
-        env:
-          VITE_API_URL: ${{ vars.API_URL }}
       - run: pnpm nx build web
         if: steps.gate.outputs.current == 'true'
         env:

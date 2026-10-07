@@ -90,8 +90,15 @@ describe("the server's package rules", () => {
     expect(await lintImport("routers", "@bardery/schemas")).toBe("ok");
   });
 
-  it.each(["services", "routers", ""])("stops %j importing @bardery/client", async (from) => {
-    expect(await lintImport(from, "@bardery/client")).toContain("no-restricted-imports");
+  it.each(["services", "routers", ""])("lets %j import utils and i18n", async (from) => {
+    expect(await lintImport(from, "@bardery/utils")).toBe("ok");
+    expect(await lintImport(from, "@bardery/i18n")).toBe("ok");
+  });
+
+  it.each(["services", "routers", ""])("stops %j importing other packages", async (from) => {
+    for (const specifier of ["@bardery/client", "@bardery/web"]) {
+      expect(await lintImport(from, specifier)).toContain("no-restricted-imports");
+    }
   });
 });
 
@@ -106,6 +113,13 @@ describe("the web app's boundary to the server", () => {
   it("stops the web app importing a runtime value from the server", async () => {
     const source =
       'import { appRouter } from "@bardery/server/router";\nexport const r = appRouter;\n';
+    expect(await lintSource("apps/web/src", source)).toContain("no-restricted-imports");
+  });
+});
+
+describe("the web app's alias for the server's router", () => {
+  it("is not importable at runtime or as a type", async () => {
+    const source = 'import type { AppRouter } from "~/routers";\nexport type T = AppRouter;\n';
     expect(await lintSource("apps/web/src", source)).toContain("no-restricted-imports");
   });
 });
