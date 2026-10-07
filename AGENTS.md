@@ -33,7 +33,7 @@ Node and pnpm versions are pinned in `.node-version` and `package.json`.
 - Config files stay close to tool defaults; each deviation gets a one-line comment saying why.
 - Code and config comments say the reason in words and never cite a grilling question number (Q38); a reader without the session does not know what to do with it. If a comment needs a source, name the document.
 - Before pushing a change to a workflow file, check that it parses (e.g. load it with a YAML parser) and look at the CI run on that push: an invalid workflow starts no jobs and shows only a failed run with nothing in it.
-- After a PR is merged, add a line to [`docs/harness-log.md`](docs/harness-log.md).
+- Add the harness log entries to [`docs/harness-log.md`](docs/harness-log.md) in the PR that caused them, as a commit after the PR is opened, so the entry carries its number. Don't wait for the merge.
 
 ## Tooling notes
 
