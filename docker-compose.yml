@@ -1,0 +1,23 @@
+# Services for local development: `docker compose up --detach`.
+services:
+  postgres:
+    # Postgres with pgvector, on the same major version as the staging server (infra/envs/staging/database.tf).
+    # The server's integration tests and image test start this image too.
+    image: pgvector/pgvector:0.8.7-pg18-trixie
+    environment:
+      POSTGRES_USER: bardery
+      POSTGRES_PASSWORD: bardery
+      POSTGRES_DB: bardery
+    # Local only: nothing outside this machine reaches the development database.
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      # Postgres 18 images keep their data below this folder, not in its `data` subfolder.
+      - postgres:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD", "pg_isready", "--username=bardery", "--dbname=bardery"]
+      interval: 2s
+      retries: 15
+
+volumes:
+  postgres:

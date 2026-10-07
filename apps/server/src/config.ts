@@ -15,6 +15,13 @@ const configSchema = z.object({
         .map((origin) => origin.trim())
         .filter(Boolean),
     ),
+  // The local Docker Compose database by default. On Azure the URL names no password: the server
+  // signs in as the managed identity below, with an Entra token.
+  DATABASE_URL: z
+    .url({ protocol: /^postgres(ql)?$/ })
+    .default("postgres://bardery:bardery@localhost:5432/bardery"),
+  // The client ID of the managed identity to sign in to the database with; unset locally.
+  AZURE_CLIENT_ID: z.string().min(1).optional(),
 });
 
 export type Config = z.infer<typeof configSchema>;

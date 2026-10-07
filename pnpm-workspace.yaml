@@ -5,7 +5,13 @@ packages:
 
 # None of these install scripts is needed: `pnpm prepare` installs the lefthook hooks,
 # Nx works without its postinstall, and @parcel/watcher (used by Sass) ships prebuilt binaries.
+# esbuild (drizzle-kit) finds its prebuilt binary without its install check; cpu-features and ssh2
+# (Testcontainers) only speed up SSH, which Testcontainers doesn't use; protobufjs needs no build.
 allowBuilds:
   "@parcel/watcher": false
+  cpu-features: false
+  esbuild: false
   lefthook: false
   nx: false
+  protobufjs: false
+  ssh2: false

@@ -26,8 +26,10 @@ RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/bin/npm /usr/local/bin/npx
 ARG VERSION
 ENV NODE_ENV=production VERSION=${VERSION}
 WORKDIR /app
-# The build bundles the dependencies, so the image needs no node_modules.
-COPY --from=build /repo/apps/server/dist/main.mjs dist/main.mjs
+# The build bundles the dependencies, so the image needs no node_modules. migrate.mjs is the
+# migrations job's command; the build puts the migrations it reads beside it, in db/.
+COPY --from=build /repo/apps/server/dist/main.mjs /repo/apps/server/dist/migrate.mjs dist/
+COPY --from=build /repo/apps/server/dist/db/ dist/db/
 # The `node` user comes with the base image.
 USER node
 EXPOSE 3000

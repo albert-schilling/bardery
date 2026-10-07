@@ -21,6 +21,19 @@ These are early UI prototypes. See [`docs/design/`](docs/design/) for all screen
 
 Bardery is a public reference for building a production-ready, AI-powered full-stack application: a React Router web app, an Expo app for iOS and Android, a TypeScript backend, and AI generation of text, illustrations and narration, all running in the EU on Azure. Beyond the features, it shows the engineering around them: a clean layered architecture, tests, evaluations for the AI workflows, observability, infrastructure as code and CI/CD.
 
+## Local development
+
+With Node, pnpm and Docker running:
+
+```sh
+pnpm install
+docker compose up --detach         # Postgres with pgvector
+pnpm nx migrate-database server    # applies the migrations
+pnpm nx dev server                 # the api on http://localhost:3000
+```
+
+`http://localhost:3000/trpc/health` then reports the database as `up`. After changing `apps/server/src/db/schema.ts`, generate its migration with `pnpm --filter @bardery/server exec drizzle-kit generate` and commit it; CI's `check-migrations` fails otherwise. The server's tests start their own Postgres in Docker.
+
 ## Documentation
 
 - [`CONTEXT.md`](CONTEXT.md): the domain glossary.

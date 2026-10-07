@@ -4,4 +4,4 @@ import { publicProcedure } from "~/routers/trpc";
 
 export const health = publicProcedure
   .output(healthSchema)
-  .query(({ ctx }) => ({ status: "ok", version: ctx.version }));
+  .query(({ ctx }) => ctx.services.health.check());

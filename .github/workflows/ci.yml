@@ -38,7 +38,9 @@ jobs:
       - run: pnpm lint
 
       - uses: nrwl/nx-set-shas@afb73a62d26e41464e9254689e1fd6122ee683c1 # v5.0.1
-      - run: pnpm nx affected -t lint typecheck test build test-image
+      # The server's tests start Postgres in Docker (Testcontainers); check-migrations fails when the
+      # Drizzle schema has changes that no checked-in migration covers.
+      - run: pnpm nx affected -t lint typecheck test build test-image check-migrations
 
   terraform-checks:
     runs-on: ubuntu-latest
@@ -253,16 +255,35 @@ jobs:
       - run: az containerapp update --name web --resource-group bardery-staging --image "$IMAGE"
         if: steps.gate.outputs.current == 'true'
 
-      # Terraform ignores the image tag, so CI alone sets it. The smoke test checks that /health
-      # reports this commit; the new revision may still be cold-starting or the old one serving.
+      # The migrations run from this commit's image before the api gets it. If they fail, the deploy
+      # stops here and the running api keeps serving. The job's logs are in Log Analytics.
+      - run: |
+          az containerapp job update --name migrations --resource-group bardery-staging --image "$API_IMAGE" --output none
+          execution=$(az containerapp job start --name migrations --resource-group bardery-staging --query name --output tsv)
+          for _ in {1..60}; do
+            status=$(az containerapp job execution show --name migrations --resource-group bardery-staging \
+              --job-execution-name "$execution" --query properties.status --output tsv)
+            case $status in
+              Succeeded) exit 0 ;;
+              Failed | Stopped | Degraded) break ;;
+            esac
+            sleep 10
+          done
+          echo "::error::The migrations job's execution $execution is \"$status\", expected Succeeded"
+          exit 1
+        if: steps.gate.outputs.current == 'true'
+
+      # Terraform ignores the image tag, so CI alone sets it. The smoke test checks that the health
+      # procedure reports this commit and a reachable database; the new revision may still be
+      # cold-starting or the old one serving.
       - run: az containerapp update --name api --resource-group bardery-staging --image "$API_IMAGE"
         if: steps.gate.outputs.current == 'true'
       - run: |
           for _ in {1..30}; do
-            version=$(curl --silent --fail --max-time 10 https://api.staging.bardery.app/health | jq -r .version || true)
-            [[ $version == "$GITHUB_SHA" ]] && exit 0
+            health=$(curl --silent --fail --max-time 10 https://api.staging.bardery.app/trpc/health | jq --compact-output .result.data || true)
+            [[ $(jq -r .version <<< "$health") == "$GITHUB_SHA" && $(jq -r .database <<< "$health") == up ]] && exit 0
             sleep 10
           done
-          echo "::error::https://api.staging.bardery.app/health reports \"$version\", expected $GITHUB_SHA"
+          echo "::error::https://api.staging.bardery.app/trpc/health reports $health, expected version $GITHUB_SHA and database up"
           exit 1
         if: steps.gate.outputs.current == 'true'

@@ -3,5 +3,10 @@
   "name": "server",
   "projectType": "application",
   "sourceRoot": "apps/server/src",
-  "tags": ["scope:server"]
+  "tags": ["scope:server"],
+  "targets": {
+    "migrate-database": {
+      "dependsOn": ["build"]
+    }
+  }
 }
