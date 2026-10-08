@@ -167,7 +167,7 @@ One-time setup, after the first CI push of the image:
 
 **No password.** Password sign-in is off. The user-assigned identity `bardery-staging-api` is the server's Entra administrator, and the `api` app and the `migrations` job run as it, signing in with Entra tokens (`apps/server/src/db/client.ts`). So there is no secret for Key Vault, and CI's Contributor role can apply all of it, as it needs no role assignment. The job shares the api's identity because it runs the same image.
 
-**Migrations.** The `migrations` Container Apps job runs `node dist/migrate.mjs` from the api image. On every merge, after the apply, CI points the job at the commit's image, starts it and waits for it to succeed before it deploys the api; a failed run stops the deploy and the running api keeps serving. Its logs are in the `bardery-staging` Log Analytics workspace, table `ContainerAppConsoleLogs_CL`, where `ContainerJobName_s` is `migrations`. The smoke test then checks that the `health` procedure reports the database as `up`.
+**Migrations.** The `migrations` Container Apps job runs `node dist/migrate.mjs` from the api image. On every merge, after the apply, CI points the job at the commit's image, starts it and waits for it to succeed before it deploys either app; a failed run stops the deploy and staging keeps serving the previous release. Its logs are in the `bardery-staging` Log Analytics workspace, table `ContainerAppConsoleLogs_CL`, where `ContainerJobName_s` is `migrations`. The smoke test then checks that the `health` procedure reports the database as `up`.
 
 One-time setup, before merging the change that adds the database:
 
