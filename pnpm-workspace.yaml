@@ -3,9 +3,12 @@ packages:
   - packages/*
   - packages/shared/*
 
-# None of these install scripts is needed: `pnpm prepare` installs the lefthook hooks,
-# Nx works without its postinstall, and @parcel/watcher (used by Sass) ships prebuilt binaries.
+# No dependency needs its install script; list each new one here as `false`.
 allowBuilds:
   "@parcel/watcher": false
+  cpu-features: false
+  esbuild: false
   lefthook: false
   nx: false
+  protobufjs: false
+  ssh2: false

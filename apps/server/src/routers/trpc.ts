@@ -1,7 +1,9 @@
 import { initTRPC } from "@trpc/server";
 
+import type { Services } from "~/services";
+
 export interface Context {
-  version: string;
+  services: Services;
 }
 
 const t = initTRPC.context<Context>().create();

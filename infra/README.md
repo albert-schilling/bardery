@@ -2,12 +2,13 @@
 
 Terraform (`azurerm`) for everything on Azure, in `swedencentral` (ADR 0004).
 
-| Folder          | What it manages                                                                                                                                                                                                                                                      | State file        |
-| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| `bootstrap/`    | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state                                                                                                                                                    | —                 |
-| `envs/shared/`  | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records                                                                                                                                                                                          | `shared.tfstate`  |
-| `envs/staging/` | Resource group `bardery-staging`: the Container Apps environment, the Log Analytics workspace, the `web` app serving `apps/web` at `staging.bardery.app`, the `api` app serving `apps/server` at `api.staging.bardery.app`, and their DNS records in the shared zone | `staging.tfstate` |
-| `envs/prod/`    | Prod (not yet written)                                                                                                                                                                                                                                               | `prod.tfstate`    |
+| Folder          | What it manages                                                                                                                                                                                                                                                                                                              | State file        |
+| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| `bootstrap/`    | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state                                                                                                                                                                                                            | —                 |
+| `envs/shared/`  | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records                                                                                                                                                                                                                                                  | `shared.tfstate`  |
+| `envs/staging/` | Resource group `bardery-staging`: the Container Apps environment, the Log Analytics workspace, the `web` app serving `apps/web` at `staging.bardery.app`, the `api` app serving `apps/server` at `api.staging.bardery.app`, their DNS records in the shared zone, and the database with its `migrations` job (`database.tf`) | `staging.tfstate` |
+| `envs/prod/`    | Prod (not yet written)                                                                                                                                                                                                                                                                                                       | `prod.tfstate`    |
+| `scripts/`      | Scripts CI runs against Azure: `run-migrations.sh` starts the staging migrations job and waits for it                                                                                                                                                                                                                        | —                 |
 
 The state storage lives in its own resource group, outside Terraform, so no Terraform root can delete the state it runs on. It allows Entra ID access only (no account keys), keeps blob versions and soft-deleted blobs for 30 days, and has a delete lock.
 
@@ -160,3 +161,17 @@ One-time setup, after the first CI push of the image:
    ```
 
 4. Check it: `curl https://api.staging.bardery.app/health` returns the deployed commit SHA as `version`, and `terraform plan` shows no changes.
+
+## Staging database
+
+`database.tf` holds Postgres Flexible Server `bardery-staging`: B1ms, the Postgres major version that `docker-compose.yml` runs, 7-day backups, pgvector allow-listed, TLS required, and the database `bardery`. Its firewall admits Azure services only (the `0.0.0.0` rule), because Container Apps on the consumption plan have no fixed outbound address.
+
+**No password.** Password sign-in is off. The user-assigned identity `bardery-staging-api` is the server's Entra administrator, and the `api` app and the `migrations` job run as it, signing in with Entra tokens (`apps/server/src/db/client.ts`). So there is no secret for Key Vault, and CI's Contributor role can apply all of it, as it needs no role assignment. The job shares the api's identity because it runs the same image.
+
+**Migrations.** The `migrations` Container Apps job runs `node dist/migrate.mjs` from the api image. On every merge, after the apply, CI points the job at the commit's image, starts it and waits for it to succeed before it deploys either app; a failed run stops the deploy and staging keeps serving the previous release. Its logs are in the `bardery-staging` Log Analytics workspace, table `ContainerAppConsoleLogs_CL`, where `ContainerJobName_s` is `migrations`. The smoke test then checks that the `health` procedure reports the database as `up`.
+
+One-time setup, before merging the change that adds the database:
+
+1. Register the namespaces, which CI's identity can't: `az provider register --namespace Microsoft.DBforPostgreSQL --wait`, and the same for `Microsoft.ManagedIdentity`.
+2. Apply `envs/shared` (`terraform apply` there), so the plan identity's custom role can also list the job's secrets. Without it, pull request plans of `envs/staging` fail with a 403 once the job exists.
+3. Entra sign-in to the server needs Azure Database for PostgreSQL's own service principal in the tenant (see the azurerm provider's note on `active_directory_auth_enabled`). If the first apply fails to set the Entra administrator for that reason, turn on Microsoft Entra authentication once for the server in the Azure portal (_Security → Authentication_), which creates it, and rerun the deploy.

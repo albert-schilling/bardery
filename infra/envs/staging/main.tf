@@ -114,6 +114,12 @@ resource "azurerm_container_app" "api" {
   revision_mode                = "Single"
   workload_profile_name        = "Consumption"
 
+  # Signs in to the database (database.tf).
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.api.id]
+  }
+
   template {
     min_replicas = 0
     max_replicas = 1
@@ -127,6 +133,14 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "CORS_ORIGINS"
         value = "https://staging.bardery.app"
+      }
+
+      dynamic "env" {
+        for_each = local.database_env
+        content {
+          name  = env.key
+          value = env.value
+        }
       }
 
       startup_probe {

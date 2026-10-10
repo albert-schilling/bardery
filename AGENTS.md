@@ -39,4 +39,5 @@ Node and pnpm versions are pinned in `.node-version` and `package.json`.
 
 - oxfmt formats SCSS and CSS (checked with oxfmt 0.70), so it owns formatting of styles; Stylelint only lints them.
 - A nested `.oxlintrc.json` replaces the root one instead of merging with it. Even with `extends` it loses the root's path-based `overrides`, so per-folder rules go in the root config with paths from the repo root.
+- A package script whose name is an Nx command (`migrate`, `release`, `graph`, …) can't be run as `pnpm nx <name> <project>`: Nx runs its own command. Name targets so they don't shadow one.
 - oxlint's regexes (e.g. `no-restricted-imports` `regex` patterns) have no lookahead; a pattern with `(?!…)` silently matches nothing. Use `group` patterns with `!` negation instead.
