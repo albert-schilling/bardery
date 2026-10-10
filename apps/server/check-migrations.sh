@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Fails if the Drizzle schema has changes that no migration covers: drizzle-kit would generate one.
+# Fails when src/db/schema.ts has changes that no checked-in migration covers. drizzle-kit generate
+# writes a migration only for such changes, so any uncommitted file in src/db/migrations afterwards
+# means one is missing (or, locally, that you generated one and haven't committed it yet).
 set -euo pipefail
 cd "$(dirname "$0")"
 
-fingerprint() { find src/db/migrations -type f -print0 | sort --zero-terminated | xargs --null sha256sum; }
-
-before=$(fingerprint)
 pnpm exec drizzle-kit generate > /dev/null
-if [[ $(fingerprint) != "$before" ]]; then
-  echo "src/db/schema.ts has changes without a migration. drizzle-kit generated it now; review and commit it:"
-  git status --short -- src/db/migrations
+changes=$(git status --porcelain -- src/db/migrations)
+if [[ -n $changes ]]; then
+  echo "Commit the migration for src/db/schema.ts that drizzle-kit generated:"
+  echo "$changes"
   exit 1
 fi
 echo "ok   the migrations match the schema"
