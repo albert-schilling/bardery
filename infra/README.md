@@ -164,7 +164,7 @@ One-time setup, after the first CI push of the image:
 
 ## Staging database
 
-`database.tf` holds Postgres Flexible Server `bardery-staging`: B1ms, the Postgres major version that `docker-compose.yml` runs, 7-day backups, pgvector allow-listed, TLS required, and the database `bardery`. Its firewall admits Azure services only (the `0.0.0.0` rule), because Container Apps on the consumption plan have no fixed outbound address.
+`database.tf` holds Postgres Flexible Server `bardery-staging-plc`: B1ms, the Postgres major version that `docker-compose.yml` runs, 7-day backups, pgvector allow-listed, TLS required, and the database `bardery`. Its firewall admits Azure services only (the `0.0.0.0` rule), because Container Apps on the consumption plan have no fixed outbound address.
 
 **No password.** Password sign-in is off. The user-assigned identity `bardery-staging-api` is the server's Entra administrator, and the `api` app and the `migrations` job run as it, signing in with Entra tokens (`apps/server/src/db/client.ts`). So there is no secret for Key Vault, and CI's Contributor role can apply all of it, as it needs no role assignment. The job shares the api's identity because it runs the same image.
 
@@ -175,3 +175,9 @@ One-time setup, before merging the change that adds the database:
 1. Register the namespaces, which CI's identity can't: `az provider register --namespace Microsoft.DBforPostgreSQL --wait`, and the same for `Microsoft.ManagedIdentity`.
 2. Apply `envs/shared` (`terraform apply` there), so the plan identity's custom role can also list the job's secrets. Without it, pull request plans of `envs/staging` fail with a 403 once the job exists.
 3. Entra sign-in to the server needs Azure Database for PostgreSQL's own service principal in the tenant (see the azurerm provider's note on `active_directory_auth_enabled`). If the first apply fails to set the Entra administrator for that reason, turn on Microsoft Entra authentication once for the server in the Azure portal (_Security → Authentication_), which creates it, and rerun the deploy.
+
+**Poland Central, for now.** The server should sit in Sweden Central with everything else (ADR 0004), but Sweden Central had no Postgres capacity for this subscription: every create failed with `RegionalAllocationFailed`, for B1ms and B2s in all three zones, also after the subscription moved from Free Trial to Pay-As-You-Go. A support request for region access (_Service and subscription limits (quotas) → Azure Database for PostgreSQL Flexible Server → Region access_) is open. Until it is granted, the server runs in Poland Central, still in the EU, and the api in Sweden Central reaches it a few milliseconds further away. To move it back once the request is granted:
+
+1. If staging holds data worth keeping, dump it first: `pg_dump` from the Poland server, sign in as `bardery-staging-api` with an Entra token.
+2. Set `location` back to `azurerm_resource_group.staging.location` and the name back to `bardery-staging` (or a new one, if Azure still reserves it), and remove the comment above the server.
+3. The plan replaces the server, so CI's deploy stops at its destroy check. Apply it by hand (`terraform apply` in `envs/staging`), then restore the dump if there was one, and re-run the deploy so the migrations run.

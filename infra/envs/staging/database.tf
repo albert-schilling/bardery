@@ -10,9 +10,13 @@ resource "azurerm_user_assigned_identity" "api" {
   resource_group_name = azurerm_resource_group.staging.name
 }
 
+# In Poland Central for now, not in the resource group's Sweden Central: Sweden Central has no
+# capacity for this subscription (RegionalAllocationFailed for B1ms and B2s in every zone), and a
+# region-access request is open (infra/README.md, Staging database). The name differs from
+# `bardery-staging` because the failed attempts still reserve that name in Sweden Central.
 resource "azurerm_postgresql_flexible_server" "staging" {
-  name                = "bardery-staging"
-  location            = azurerm_resource_group.staging.location
+  name                = "bardery-staging-plc"
+  location            = "polandcentral"
   resource_group_name = azurerm_resource_group.staging.name
   # The major version docker-compose.yml runs, for development and the tests; change both together.
   version               = "18"
