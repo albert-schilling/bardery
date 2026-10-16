@@ -5,11 +5,11 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { expect, it } from "vitest";
 
 import { connectDatabase } from "~/db/client";
-import { startTestDatabase } from "~/db/test-database";
+import { createTestDatabase } from "~/db/test-database";
 
-it("the migrations enable pgvector", { timeout: 120_000 }, async () => {
-  const container = await startTestDatabase();
-  const database = connectDatabase({ url: container.getConnectionUri() });
+it("the migrations enable pgvector", async () => {
+  const testDatabase = await createTestDatabase();
+  const database = connectDatabase({ url: testDatabase.url });
   try {
     await migrate(database.db, {
       migrationsFolder: fileURLToPath(new URL("migrations", import.meta.url)),
@@ -21,6 +21,6 @@ it("the migrations enable pgvector", { timeout: 120_000 }, async () => {
     expect(rows).toEqual([{ extname: "vector" }]);
   } finally {
     await database.close();
-    await container.stop();
+    await testDatabase.drop();
   }
 });
