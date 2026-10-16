@@ -143,6 +143,11 @@ resource "azurerm_container_app" "api" {
         }
       }
 
+      env {
+        name  = "AZURE_COMMUNICATION_ENDPOINT"
+        value = local.communication_endpoint
+      }
+
       startup_probe {
         transport = "HTTP"
         port      = 3000
