@@ -46,6 +46,9 @@ resource "azurerm_container_app" "web" {
   workload_profile_name        = "Consumption"
 
   template {
+    # One replica stays up, so a visit doesn't wait for a cold start (infra/README.md, "Cold starts").
+    min_replicas = 1
+
     container {
       name   = "web"
       image  = "ghcr.io/albert-schilling/bardery-web:latest"
@@ -105,8 +108,7 @@ resource "azurerm_container_app_custom_domain" "web" {
   }
 }
 
-# The server (apps/server) at api.staging.bardery.app. Min 0 replicas in staging; the first
-# request after a quiet spell waits for a cold start.
+# The server (apps/server) at api.staging.bardery.app.
 resource "azurerm_container_app" "api" {
   name                         = "api"
   container_app_environment_id = azurerm_container_app_environment.staging.id
@@ -121,7 +123,8 @@ resource "azurerm_container_app" "api" {
   }
 
   template {
-    min_replicas = 0
+    # One replica stays up, so the page's first request doesn't wait for a cold start (infra/README.md, "Cold starts").
+    min_replicas = 1
     max_replicas = 1
 
     container {
