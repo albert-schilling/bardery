@@ -190,8 +190,14 @@ The server sends email through Azure Communication Services from `noreply@mail.b
 
 One-time setup, in this order:
 
-1. Apply `envs/shared` by hand. Its provider registers the `Microsoft.Communication` namespace first, which the email resources need. It creates the domain and the DNS records from the domain's `verification_records`. The record names are known only after the apply, so check them in the DNS zone afterwards: if Azure returned names that are not relative to `bardery.app`, fix the `trimsuffix` calls in `envs/shared/main.tf` and apply again.
-2. Ask Azure to verify the domain. Terraform creates the records but can't trigger the check, so run this once, then wait a few minutes until the domain shows `Verified` for both Domain and SPF and DKIM and DKIM2:
+1. Register the namespace the email resources need, before the first apply. It is not in the provider's registration list: the pull-request plan runs as a read-only identity, which can't register anything and would fail on a namespace that isn't registered yet.
+
+   ```sh
+   az provider register --namespace Microsoft.Communication --wait
+   ```
+
+2. Apply `envs/shared` by hand. It creates the domain and the DNS records from the domain's `verification_records`. The record names are known only after the apply, so check them in the DNS zone afterwards: if Azure returned names that are not relative to `bardery.app`, fix the `trimsuffix` calls in `envs/shared/main.tf` and apply again.
+3. Ask Azure to verify the domain. Terraform creates the records but can't trigger the check, so run this once, then wait a few minutes until the domain shows `Verified` for both Domain and SPF and DKIM and DKIM2:
 
    ```sh
    az communication email domain initiate-verification --domain-name mail.bardery.app \
@@ -206,8 +212,8 @@ One-time setup, in this order:
 
    The domain must be verified before `envs/staging` links to it: the association fails otherwise.
 
-3. Register the namespace on the subscription for staging's apply too, because CI's identity can't: it already happened if you applied `envs/shared` with the same subscription, and `az provider show --namespace Microsoft.Communication --query registrationState` says `Registered`. Then apply `envs/staging` (CI does it on merge).
-4. Let the api's identity send. CI's Contributor role can't create role assignments, so assign it by hand, once:
+4. Apply `envs/staging` (CI does it on merge). The namespace is registered on the subscription from step 1, so CI's identity needs no right to register it.
+5. Let the api's identity send. CI's Contributor role can't create role assignments, so assign it by hand, once:
 
    ```sh
    az role assignment create --assignee-object-id "$(az identity show -n bardery-staging-api -g bardery-staging --query principalId -o tsv)" \
@@ -215,7 +221,7 @@ One-time setup, in this order:
      --scope "$(terraform -chdir=infra/envs/staging output -raw communication_service_id)"
    ```
 
-5. Send a test email from the running api. The CLI runs inside the `api` container, so it never needs network access to the database:
+6. Send a test email from the running api. The CLI runs inside the `api` container, so it never needs network access to the database:
 
    ```sh
    az containerapp exec -n api -g bardery-staging --command "node dist/admin.mjs email send-test you@example.com"
