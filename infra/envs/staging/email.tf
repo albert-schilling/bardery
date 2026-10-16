@@ -1,11 +1,10 @@
 # Sending email: this environment's Communication Service, linked to the sender domain that envs/shared
 # verified. See envs/shared/main.tf for why the domain is shared.
 
-# The sender domain from envs/shared.
-data "azurerm_email_communication_service_domain" "mail" {
-  name                = "mail.bardery.app"
-  email_service_name  = "bardery"
-  resource_group_name = "bardery-shared"
+locals {
+  # The sender domain from envs/shared, built from its names: the provider has no data source for it,
+  # and a plan would otherwise need read access to look it up.
+  mail_domain_id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/bardery-shared/providers/Microsoft.Communication/emailServices/bardery/domains/mail.bardery.app"
 }
 
 resource "azurerm_communication_service" "staging" {
@@ -16,7 +15,7 @@ resource "azurerm_communication_service" "staging" {
 
 resource "azurerm_communication_service_email_domain_association" "staging" {
   communication_service_id = azurerm_communication_service.staging.id
-  email_service_domain_id  = data.azurerm_email_communication_service_domain.mail.id
+  email_service_domain_id  = local.mail_domain_id
 }
 
 locals {
