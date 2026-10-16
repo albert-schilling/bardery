@@ -138,13 +138,13 @@ Q69 hosts `apps/web` on Static Web Apps, but its only EU region, `westeurope`, d
 
    Terraform ignores the image, so a deploy doesn't show up as drift. Since #4, CI does all of this on every merge to `main`; hand deploys are only for emergencies.
 
-5. **Check it**: `https://staging.bardery.app` shows the page with a valid certificate, `https://staging.bardery.app/any/path` still serves it, and `terraform plan` shows no changes. The app scales to zero, so the first request after a quiet spell takes a few seconds.
+5. **Check it**: `https://staging.bardery.app` shows the page with a valid certificate, `https://staging.bardery.app/any/path` still serves it, and `terraform plan` shows no changes.
 
 `pnpm nx test-image web` builds the image and checks that deep links serve the app and missing assets return 404. CI runs it too.
 
 ## Staging api
 
-The `api` Container App runs `apps/server` from the public image `ghcr.io/albert-schilling/bardery-server` at `https://api.staging.bardery.app`, with min 0 replicas and startup, liveness and readiness probes on `/health`. Logs go to the `bardery-staging` Log Analytics workspace.
+The `api` Container App runs `apps/server` from the public image `ghcr.io/albert-schilling/bardery-server` at `https://api.staging.bardery.app`, with one replica (see _Cold starts_) and startup, liveness and readiness probes on `/health`. Logs go to the `bardery-staging` Log Analytics workspace.
 
 **Who owns the image tag: CI.** Terraform sets only the first image (`:latest`) and ignores later changes (`ignore_changes` on the image), like the `web` app. On every merge to `main`, CI builds the image once, tags it with the commit SHA, pushes it to GHCR, attaches build provenance, points the app at it with `az containerapp update` and then checks that `/health` reports the merged commit SHA. So a deploy never shows up in `terraform plan`, and Terraform never rolls a deploy back. CI builds and pushes the image before the apply, because the first apply creates the app, which needs an image to start; it also pushes `latest` for that.
 
@@ -161,6 +161,23 @@ One-time setup, after the first CI push of the image:
    ```
 
 4. Check it: `curl https://api.staging.bardery.app/health` returns the deployed commit SHA as `version`, and `terraform plan` shows no changes.
+
+## Cold starts
+
+`web` and `api` each keep one replica running (`min_replicas = 1`). With zero, a visit after about five quiet minutes waited for two cold starts in a row: Azure pulled and started `web` to serve the page, then the page's first request did the same for `api`, which also opened its first database connection.
+
+**Cost.** Container Apps bills a replica at the minimum count at a reduced _idle_ rate while it serves no requests, uses less than 0.01 vCPU and receives less than 1,000 bytes/s ([billing](https://learn.microsoft.com/en-us/azure/container-apps/billing)). At the Sweden Central rates in the [Azure research](../docs/research/2026-09-24-azure-all-in.md) ($0.000003 per vCPU-second idle, $0.000024 active, $0.000003 per GiB-second), the two replicas (0.25 vCPU and 0.5 GiB each) cost:
+
+| 30 days, both apps | vCPU-seconds | GiB-seconds |
+| ------------------ | ------------ | ----------- |
+| Allocated          | 1,296,000    | 2,592,000   |
+| Monthly free grant | −180,000     | −360,000    |
+| Billable           | 1,116,000    | 2,232,000   |
+
+- **Idle**, staging's usual state: 1,116,000 × $0.000003 + 2,232,000 × $0.000003 ≈ **$10 a month**.
+- **Active** all month, the upper bound: 1,116,000 × $0.000024 + 2,232,000 × $0.000003 ≈ $33 a month.
+
+Whether health probes keep a replica from counting as idle isn't documented. After a few days, compare the Container Apps line in Cost Management with these numbers. Setting `min_replicas` back to 0 brings the cost back to about zero, and the cold starts with it.
 
 ## Staging database
 
