@@ -19,9 +19,8 @@ resource "azurerm_communication_service_email_domain_association" "staging" {
 }
 
 locals {
-  # The address the server sends through (AZURE_COMMUNICATION_ENDPOINT). Azure builds it from the
-  # service's name and data location.
-  communication_endpoint = "https://${azurerm_communication_service.staging.name}.europe.communication.azure.com"
+  # The address the server sends through (AZURE_COMMUNICATION_ENDPOINT).
+  communication_endpoint = "https://${azurerm_communication_service.staging.hostname}"
 }
 
 # The api's identity needs the role "Communication and Email Service Owner" on the Communication
