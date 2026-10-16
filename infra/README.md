@@ -190,7 +190,7 @@ The server sends email through Azure Communication Services from `noreply@mail.b
 
 One-time setup, in this order:
 
-1. Apply `envs/shared` by hand. It creates the domain and the DNS records from the domain's `verification_records`. The record names are known only after the apply, so check them in the DNS zone afterwards: if Azure returned names that are not relative to `bardery.app`, fix the `trimsuffix` calls in `envs/shared/main.tf` and apply again.
+1. Apply `envs/shared` by hand. Its provider registers the `Microsoft.Communication` namespace first, which the email resources need. It creates the domain and the DNS records from the domain's `verification_records`. The record names are known only after the apply, so check them in the DNS zone afterwards: if Azure returned names that are not relative to `bardery.app`, fix the `trimsuffix` calls in `envs/shared/main.tf` and apply again.
 2. Ask Azure to verify the domain. Terraform creates the records but can't trigger the check, so run this once, then wait a few minutes until the domain shows `Verified` for both Domain and SPF and DKIM and DKIM2:
 
    ```sh
@@ -204,9 +204,9 @@ One-time setup, in this order:
      --email-service-name bardery -g bardery-shared --verification-type DKIM2
    ```
 
-   The domain must be verified before `envs/staging` links to it: the association fails otherwise. Also register the namespaces CI can't: `az provider register --namespace Microsoft.Communication --wait`.
+   The domain must be verified before `envs/staging` links to it: the association fails otherwise.
 
-3. Apply `envs/staging` (CI does it on merge).
+3. Register the namespace on the subscription for staging's apply too, because CI's identity can't: it already happened if you applied `envs/shared` with the same subscription, and `az provider show --namespace Microsoft.Communication --query registrationState` says `Registered`. Then apply `envs/staging` (CI does it on merge).
 4. Let the api's identity send. CI's Contributor role can't create role assignments, so assign it by hand, once:
 
    ```sh

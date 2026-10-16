@@ -20,6 +20,8 @@ const configSchema = z.object({
   DATABASE_URL: z
     .url({ protocol: /^postgres(ql)?$/ })
     .default("postgres://bardery:bardery@localhost:5432/bardery"),
+  // The image sets production; locally it is unset.
+  NODE_ENV: z.string().optional(),
   // The client ID of the managed identity to sign in to the database with; unset locally.
   AZURE_CLIENT_ID: z.string().min(1).optional(),
   // The sender of every email; its domain must be verified on the Communication Service.

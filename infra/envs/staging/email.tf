@@ -3,7 +3,8 @@
 
 locals {
   # The sender domain from envs/shared, built from its names: the provider has no data source for it,
-  # and a plan would otherwise need read access to look it up.
+  # and a plan would otherwise need read access to look it up. The names must match envs/shared/main.tf:
+  # the resource group, azurerm_email_communication_service.bardery and azurerm_email_communication_service_domain.mail.
   mail_domain_id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/bardery-shared/providers/Microsoft.Communication/emailServices/bardery/domains/mail.bardery.app"
 }
 

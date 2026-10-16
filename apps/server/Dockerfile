@@ -27,7 +27,8 @@ ARG VERSION
 ENV NODE_ENV=production VERSION=${VERSION}
 WORKDIR /app
 # The build bundles the dependencies, so the image needs no node_modules. migrate.mjs is the
-# migrations job's command, and admin.mjs is the admin CLI, run with `az containerapp exec`; the build puts the migrations it reads beside it, in db/.
+# migrations job's command; the build puts the migrations it reads beside it, in db/. admin.mjs is
+# the admin CLI, run with `az containerapp exec`.
 COPY --from=build /repo/apps/server/dist/main.mjs /repo/apps/server/dist/migrate.mjs /repo/apps/server/dist/admin.mjs dist/
 COPY --from=build /repo/apps/server/dist/db/ dist/db/
 # The `node` user comes with the base image.
