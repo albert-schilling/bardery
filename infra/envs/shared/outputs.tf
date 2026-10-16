@@ -12,3 +12,8 @@ output "github_actions" {
     AZURE_SUBSCRIPTION_ID = data.azurerm_client_config.current.subscription_id
   }
 }
+
+output "mail_domain_id" {
+  description = "The verified sender domain's ID, which each environment's Communication Service links to."
+  value       = azurerm_email_communication_service_domain.mail.id
+}

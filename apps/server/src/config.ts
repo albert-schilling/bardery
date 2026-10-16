@@ -22,6 +22,13 @@ const configSchema = z.object({
     .default("postgres://bardery:bardery@localhost:5432/bardery"),
   // The client ID of the managed identity to sign in to the database with; unset locally.
   AZURE_CLIENT_ID: z.string().min(1).optional(),
+  // The sender of every email; its domain must be verified on the Communication Service.
+  EMAIL_FROM: z.email().default("noreply@mail.bardery.app"),
+  // The endpoint of the Azure Communication Service to send through. Unset locally, where the
+  // server sends to the SMTP server below instead.
+  AZURE_COMMUNICATION_ENDPOINT: z.url({ protocol: /^https$/ }).optional(),
+  // Mailpit from docker-compose.yml by default; used only without an Azure endpoint.
+  SMTP_URL: z.url({ protocol: /^smtps?$/ }).default("smtp://localhost:1025"),
 });
 
 export type Config = z.infer<typeof configSchema>;

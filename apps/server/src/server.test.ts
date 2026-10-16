@@ -8,6 +8,8 @@ const config = {
   VERSION: "abc123",
   CORS_ORIGINS: [],
   DATABASE_URL: "postgres://bardery@127.0.0.1:1/bardery",
+  EMAIL_FROM: "noreply@mail.bardery.app",
+  SMTP_URL: "smtp://localhost:1025",
 };
 
 describe("the api server", () => {

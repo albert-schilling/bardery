@@ -24,6 +24,8 @@ export default defineConfig([
     // migrate.mjs reads the migrations from beside it, locally and in the image.
     copy: [{ from: "src/db/migrations", to: "dist/db" }],
   },
+  // The admin CLI, run by hand: `node dist/admin.mjs` in the image, or `pnpm admin` locally.
+  { entry: ["src/admin.ts"], ...bundle, clean: false },
   {
     // The web app's only view of the server: the router's types in one file, with the server's `~/`
     // imports resolved, so the web app needs to know nothing of the server's source layout.

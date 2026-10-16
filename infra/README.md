@@ -181,3 +181,46 @@ One-time setup, before merging the change that adds the database:
 1. If staging holds data worth keeping, dump it first: `pg_dump` from the Poland server, sign in as `bardery-staging-api` with an Entra token.
 2. Set `location` back to `azurerm_resource_group.staging.location` and the name back to `bardery-staging` (or a new one, if Azure still reserves it), and remove the comment above the server.
 3. The plan replaces the server, so CI's deploy stops at its destroy check. Apply it by hand (`terraform apply` in `envs/staging`), then restore the dump if there was one, and re-run the deploy so the migrations run.
+
+## Staging email
+
+The server sends email through Azure Communication Services from `noreply@mail.bardery.app`.
+
+**What lives where.** `envs/shared` holds the Email Communication Service `bardery` and its custom domain `mail.bardery.app` (data location Europe, user-engagement tracking off), plus the domain's DNS records in the shared zone: the verification TXT, the SPF record (both at `mail`) and the two DKIM CNAMEs. A sender domain is verified once, so prod will link to the same domain. `envs/staging` holds the Communication Service `bardery-staging` and its association with that domain. The api reaches it with its managed identity, so there is no connection string. The apex DMARC record (`p=quarantine`) covers the subdomain; the mail passes DKIM with `mail.bardery.app`, which aligns with the From address.
+
+One-time setup, in this order:
+
+1. Apply `envs/shared` by hand. It creates the domain and the DNS records from the domain's `verification_records`. If Azure returns record names that are not relative to `bardery.app`, `terraform plan` shows them: fix the `trimsuffix` calls in `envs/shared/main.tf` before applying.
+2. Ask Azure to verify the domain. Terraform creates the records but can't trigger the check, so run this once, then wait a few minutes until the domain shows `Verified` for both Domain and SPF and DKIM and DKIM2:
+
+   ```sh
+   az communication email domain initiate-verification --domain-name mail.bardery.app \
+     --email-service-name bardery -g bardery-shared --verification-type Domain
+   az communication email domain initiate-verification --domain-name mail.bardery.app \
+     --email-service-name bardery -g bardery-shared --verification-type SPF
+   az communication email domain initiate-verification --domain-name mail.bardery.app \
+     --email-service-name bardery -g bardery-shared --verification-type DKIM
+   az communication email domain initiate-verification --domain-name mail.bardery.app \
+     --email-service-name bardery -g bardery-shared --verification-type DKIM2
+   ```
+
+   The domain must be verified before `envs/staging` links to it: the association fails otherwise. Also register the namespaces CI can't: `az provider register --namespace Microsoft.Communication --wait`.
+
+3. Apply `envs/staging` (CI does it on merge).
+4. Let the api's identity send. CI's Contributor role can't create role assignments, so assign it by hand, once:
+
+   ```sh
+   az role assignment create --assignee-object-id "$(az identity show -n bardery-staging-api -g bardery-staging --query principalId -o tsv)" \
+     --assignee-principal-type ServicePrincipal --role "Communication and Email Service Owner" \
+     --scope "$(terraform -chdir=infra/envs/staging output -raw communication_service_id)"
+   ```
+
+5. Send a test email from the running api. The CLI runs inside the `api` container, so it never needs network access to the database:
+
+   ```sh
+   az containerapp exec -n api -g bardery-staging --command "node dist/admin.mjs email send-test you@example.com"
+   ```
+
+   The api scales to zero: if the exec says there is no running replica, call `https://api.staging.bardery.app/health` first. In the received message's headers, SPF, DKIM and DMARC all show `pass`.
+
+Locally, `docker compose up --detach` starts Mailpit; `pnpm admin email send-test you@example.com` sends there, and the mail shows up at http://localhost:8025.
