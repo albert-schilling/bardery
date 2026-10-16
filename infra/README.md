@@ -190,7 +190,7 @@ The server sends email through Azure Communication Services from `noreply@mail.b
 
 One-time setup, in this order:
 
-1. Apply `envs/shared` by hand. It creates the domain and the DNS records from the domain's `verification_records`. If Azure returns record names that are not relative to `bardery.app`, `terraform plan` shows them: fix the `trimsuffix` calls in `envs/shared/main.tf` before applying.
+1. Apply `envs/shared` by hand. It creates the domain and the DNS records from the domain's `verification_records`. The record names are known only after the apply, so check them in the DNS zone afterwards: if Azure returned names that are not relative to `bardery.app`, fix the `trimsuffix` calls in `envs/shared/main.tf` and apply again.
 2. Ask Azure to verify the domain. Terraform creates the records but can't trigger the check, so run this once, then wait a few minutes until the domain shows `Verified` for both Domain and SPF and DKIM and DKIM2:
 
    ```sh
