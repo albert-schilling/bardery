@@ -8,5 +8,7 @@ export default defineProject({
   test: {
     name: "server",
     environment: "node",
+    // Starts one Postgres for the whole run, which the integration tests share.
+    globalSetup: ["src/db/test-database.global.ts"],
   },
 });

@@ -3,7 +3,7 @@ import type { AddressInfo } from "node:net";
 
 import { createApp } from "~/app";
 import type { Config } from "~/config";
-import { connectDatabase } from "~/db/client";
+import { connectDatabase, entraToken } from "~/db/client";
 import { createHealthRepository } from "~/repositories/health";
 import { createHealthService } from "~/services/health";
 
@@ -16,7 +16,7 @@ export interface RunningServer {
 export function startServer(config: Config): Promise<RunningServer> {
   const database = connectDatabase({
     url: config.DATABASE_URL,
-    azureClientId: config.AZURE_CLIENT_ID,
+    password: config.AZURE_CLIENT_ID === undefined ? undefined : entraToken(config.AZURE_CLIENT_ID),
   });
   const services = {
     health: createHealthService({
