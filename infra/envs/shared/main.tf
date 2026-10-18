@@ -77,12 +77,22 @@ resource "azurerm_email_communication_service_domain" "mail" {
 
 locals {
   mail_verification = azurerm_email_communication_service_domain.mail.verification_records[0]
+
+  # Azure gives the record names relative to the domain (`@`, or `selector1-azurecomm-prod-net._domainkey`),
+  # not to the zone, so they all move below `mail`: `@` becomes `mail`, a DKIM name gets `.mail` appended.
+  mail_record_name = {
+    for key, record in {
+      domain = local.mail_verification.domain[0]
+      dkim   = local.mail_verification.dkim[0]
+      dkim2  = local.mail_verification.dkim2[0]
+    } : key => record.name == "@" ? "mail" : "${record.name}.mail"
+  }
 }
 
 # Both records sit at the name of the domain: the ownership proof and the SPF record that authorizes
 # Azure to send for it. The apex SPF record doesn't cover this subdomain.
 resource "azurerm_dns_txt_record" "mail" {
-  name                = trimsuffix(local.mail_verification.domain[0].name, ".bardery.app")
+  name                = local.mail_record_name.domain
   zone_name           = azurerm_dns_zone.bardery.name
   resource_group_name = azurerm_resource_group.shared.name
   ttl                 = local.mail_verification.domain[0].ttl
@@ -99,7 +109,7 @@ resource "azurerm_dns_txt_record" "mail" {
 # The DKIM keys. The DMARC policy needs DKIM or SPF alignment, and the keys make the mail pass DKIM
 # with the domain mail.bardery.app, aligned with the From address.
 resource "azurerm_dns_cname_record" "mail_dkim" {
-  name                = trimsuffix(local.mail_verification.dkim[0].name, ".bardery.app")
+  name                = local.mail_record_name.dkim
   zone_name           = azurerm_dns_zone.bardery.name
   resource_group_name = azurerm_resource_group.shared.name
   ttl                 = local.mail_verification.dkim[0].ttl
@@ -107,7 +117,7 @@ resource "azurerm_dns_cname_record" "mail_dkim" {
 }
 
 resource "azurerm_dns_cname_record" "mail_dkim2" {
-  name                = trimsuffix(local.mail_verification.dkim2[0].name, ".bardery.app")
+  name                = local.mail_record_name.dkim2
   zone_name           = azurerm_dns_zone.bardery.name
   resource_group_name = azurerm_resource_group.shared.name
   ttl                 = local.mail_verification.dkim2[0].ttl
