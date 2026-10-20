@@ -153,12 +153,18 @@ resource "azurerm_role_definition" "container_app_secrets_lister" {
   name  = "bardery-container-app-secrets-lister"
   scope = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
 
-  description = "List Container App and job secrets, so terraform plan can refresh them."
+  description = "List Container App and job secrets, and Communication Service keys, so terraform plan can refresh them."
 
   permissions {
     actions = [
       "Microsoft.App/containerApps/listSecrets/action",
       "Microsoft.App/jobs/listSecrets/action",
+      # The provider lists the Communication Service's keys on refresh (envs/staging/email.tf). Those keys
+      # can send mail as mail.bardery.app, so abuse would harm the domain's sender reputation and DMARC
+      # standing. That makes this the one permission here that breaks the plan identity's "can't write
+      # anything" rule. It is accepted because a pull request from a fork gets no OIDC token, so only people
+      # with write access can reach the keys. Revisit if write access is ever given to anyone else.
+      "Microsoft.Communication/communicationServices/listKeys/action",
     ]
   }
 

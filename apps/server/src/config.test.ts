@@ -9,6 +9,8 @@ describe("loadConfig", () => {
       VERSION: "abc123",
       CORS_ORIGINS: ["http://localhost:5173"],
       DATABASE_URL: "postgres://bardery:bardery@localhost:5432/bardery",
+      EMAIL_FROM: "noreply@mail.bardery.app",
+      SMTP_URL: "smtp://localhost:1025",
     });
   });
 
@@ -18,6 +20,8 @@ describe("loadConfig", () => {
       VERSION: "dev",
       CORS_ORIGINS: ["http://localhost:5173"],
       DATABASE_URL: "postgres://bardery:bardery@localhost:5432/bardery",
+      EMAIL_FROM: "noreply@mail.bardery.app",
+      SMTP_URL: "smtp://localhost:1025",
     });
   });
 
@@ -52,6 +56,23 @@ describe("loadConfig", () => {
 
   it("rejects a database URL that isn't Postgres", () => {
     expect(() => loadConfig({ DATABASE_URL: "mysql://localhost/bardery" })).toThrow(/DATABASE_URL/);
+  });
+
+  it("sends from noreply@mail.bardery.app, through Mailpit unless an Azure endpoint is set", () => {
+    const config = loadConfig({});
+    expect(config.EMAIL_FROM).toBe("noreply@mail.bardery.app");
+    expect(config.AZURE_COMMUNICATION_ENDPOINT).toBeUndefined();
+    expect(
+      loadConfig({ AZURE_COMMUNICATION_ENDPOINT: "https://bardery.europe.communication.azure.com" })
+        .AZURE_COMMUNICATION_ENDPOINT,
+    ).toBe("https://bardery.europe.communication.azure.com");
+  });
+
+  it("rejects an invalid sender or endpoint, naming the variable", () => {
+    expect(() => loadConfig({ EMAIL_FROM: "nobody" })).toThrow(/EMAIL_FROM/);
+    expect(() => loadConfig({ AZURE_COMMUNICATION_ENDPOINT: "http://x.example" })).toThrow(
+      /AZURE_COMMUNICATION_ENDPOINT/,
+    );
   });
 
   it("rejects an empty version, as a build that didn't set it would have", () => {

@@ -7,6 +7,9 @@
   "targets": {
     "migrate-database": {
       "dependsOn": ["build"]
+    },
+    "admin": {
+      "dependsOn": ["build"]
     }
   }
 }

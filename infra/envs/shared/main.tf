@@ -56,3 +56,69 @@ resource "azurerm_dns_txt_record" "dmarc" {
     value = "v=DMARC1; p=quarantine"
   }
 }
+
+# Email (docs/grilling/2026-09-24-technical-session.md, Email addresses). The Email Communication Service
+# and its domain are shared, not per environment: a sender domain is verified once, and each environment
+# links its own Communication Service to it (envs/staging/email.tf). So staging and prod send from the same
+# `noreply@mail.bardery.app` without a second verification.
+resource "azurerm_email_communication_service" "bardery" {
+  name                = "bardery"
+  resource_group_name = azurerm_resource_group.shared.name
+  data_location       = "Europe"
+}
+
+resource "azurerm_email_communication_service_domain" "mail" {
+  name              = "mail.bardery.app"
+  email_service_id  = azurerm_email_communication_service.bardery.id
+  domain_management = "CustomerManaged"
+  # Tracking opens and clicks isn't needed, and a reader's reading is nobody's business.
+  user_engagement_tracking_enabled = false
+}
+
+locals {
+  mail_verification = azurerm_email_communication_service_domain.mail.verification_records[0]
+
+  # Azure returns two kinds of names. The domain record's is the full domain (`mail.bardery.app`), which
+  # is relative to the zone once the zone's name is cut off. The DKIM names (`selector1-azurecomm-prod-net._domainkey`)
+  # are relative to the domain, so they belong below `mail`.
+  mail_record_name = {
+    domain = trimsuffix(local.mail_verification.domain[0].name, ".bardery.app")
+    dkim   = "${local.mail_verification.dkim[0].name}.mail"
+    dkim2  = "${local.mail_verification.dkim2[0].name}.mail"
+  }
+}
+
+# Both records sit at the name of the domain: the ownership proof and the SPF record that authorizes
+# Azure to send for it. The apex SPF record doesn't cover this subdomain.
+resource "azurerm_dns_txt_record" "mail" {
+  name                = local.mail_record_name.domain
+  zone_name           = azurerm_dns_zone.bardery.name
+  resource_group_name = azurerm_resource_group.shared.name
+  ttl                 = local.mail_verification.domain[0].ttl
+
+  record {
+    value = local.mail_verification.domain[0].value
+  }
+
+  record {
+    value = local.mail_verification.spf[0].value
+  }
+}
+
+# The DKIM keys. The DMARC policy needs DKIM or SPF alignment, and the keys make the mail pass DKIM
+# with the domain mail.bardery.app, aligned with the From address.
+resource "azurerm_dns_cname_record" "mail_dkim" {
+  name                = local.mail_record_name.dkim
+  zone_name           = azurerm_dns_zone.bardery.name
+  resource_group_name = azurerm_resource_group.shared.name
+  ttl                 = local.mail_verification.dkim[0].ttl
+  record              = local.mail_verification.dkim[0].value
+}
+
+resource "azurerm_dns_cname_record" "mail_dkim2" {
+  name                = local.mail_record_name.dkim2
+  zone_name           = azurerm_dns_zone.bardery.name
+  resource_group_name = azurerm_resource_group.shared.name
+  ttl                 = local.mail_verification.dkim2[0].ttl
+  record              = local.mail_verification.dkim2[0].value
+}

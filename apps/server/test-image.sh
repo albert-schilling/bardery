@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Builds the api image and checks that it answers /health, runs as non-root and stops on SIGTERM.
+# Builds the api image and checks that it answers /health, runs as non-root, stops on SIGTERM and ships its commands.
 set -euo pipefail
 
 root=$(cd "$(dirname "$0")/../.." && pwd)
@@ -37,6 +37,11 @@ for _ in {1..20}; do docker exec "$database" pg_isready --quiet && break || slee
 migrate() { docker run --rm --network "$network" --env DATABASE_URL="$1" "$image" node dist/migrate.mjs > /dev/null 2>&1; echo $?; }
 check "runs the migrations" 0 "$(migrate postgres://postgres:test@postgres/postgres)"
 check "fails the migrations without a database" 1 "$(migrate postgres://postgres:test@nowhere/postgres)"
+# The endpoint is set because a production image refuses to build an email sender without one; nothing
+# connects to it, since the command is rejected before it sends. An image without admin.mjs prints
+# "Cannot find module" instead.
+admin() { docker run --rm --env AZURE_COMMUNICATION_ENDPOINT=https://bardery.example "$image" node dist/admin.mjs "$@" 2>&1 || true; }
+check "ships the admin CLI" "Usage: admin email send-test <address>" "$(admin)"
 check "stops on invalid config" 1 "$(docker run --rm --env PORT=none "$image" > /dev/null 2>&1; echo $?)"
 
 exit "$failures"
