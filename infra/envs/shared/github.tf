@@ -159,7 +159,9 @@ resource "azurerm_role_definition" "container_app_secrets_lister" {
     actions = [
       "Microsoft.App/containerApps/listSecrets/action",
       "Microsoft.App/jobs/listSecrets/action",
-      # The provider lists the Communication Service's keys on refresh (envs/staging/email.tf).
+      # The provider lists the Communication Service's keys on refresh (envs/staging/email.tf). Those keys
+      # can send mail as mail.bardery.app, so this is a wider permission for pull requests than the others;
+      # accepted because it matches the secrets above and the repository has one owner.
       "Microsoft.Communication/communicationServices/listKeys/action",
     ]
   }
