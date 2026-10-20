@@ -78,14 +78,13 @@ resource "azurerm_email_communication_service_domain" "mail" {
 locals {
   mail_verification = azurerm_email_communication_service_domain.mail.verification_records[0]
 
-  # Azure gives the record names relative to the domain (`@`, or `selector1-azurecomm-prod-net._domainkey`),
-  # not to the zone, so they all move below `mail`: `@` becomes `mail`, a DKIM name gets `.mail` appended.
+  # Azure returns two kinds of names. The domain record's is the full domain (`mail.bardery.app`), which
+  # is relative to the zone once the zone's name is cut off. The DKIM names (`selector1-azurecomm-prod-net._domainkey`)
+  # are relative to the domain, so they belong below `mail`.
   mail_record_name = {
-    for key, record in {
-      domain = local.mail_verification.domain[0]
-      dkim   = local.mail_verification.dkim[0]
-      dkim2  = local.mail_verification.dkim2[0]
-    } : key => record.name == "@" ? "mail" : "${record.name}.mail"
+    domain = trimsuffix(local.mail_verification.domain[0].name, ".bardery.app")
+    dkim   = "${local.mail_verification.dkim[0].name}.mail"
+    dkim2  = "${local.mail_verification.dkim2[0].name}.mail"
   }
 }
 

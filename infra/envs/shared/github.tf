@@ -153,12 +153,14 @@ resource "azurerm_role_definition" "container_app_secrets_lister" {
   name  = "bardery-container-app-secrets-lister"
   scope = "/subscriptions/${data.azurerm_client_config.current.subscription_id}"
 
-  description = "List Container App and job secrets, so terraform plan can refresh them."
+  description = "List Container App and job secrets, and Communication Service keys, so terraform plan can refresh them."
 
   permissions {
     actions = [
       "Microsoft.App/containerApps/listSecrets/action",
       "Microsoft.App/jobs/listSecrets/action",
+      # The provider lists the Communication Service's keys on refresh (envs/staging/email.tf).
+      "Microsoft.Communication/communicationServices/listKeys/action",
     ]
   }
 
