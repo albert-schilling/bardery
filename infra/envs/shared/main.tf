@@ -75,6 +75,14 @@ resource "azurerm_email_communication_service_domain" "mail" {
   user_engagement_tracking_enabled = false
 }
 
+# Azure sends only from usernames the domain lists. A custom domain starts with none, so `noreply` has
+# to be created before `noreply@mail.bardery.app` (EMAIL_FROM in apps/server/src/config.ts) is accepted.
+resource "azurerm_email_communication_service_domain_sender_username" "noreply" {
+  name                    = "noreply"
+  email_service_domain_id = azurerm_email_communication_service_domain.mail.id
+  display_name            = "Bardery"
+}
+
 locals {
   mail_verification = azurerm_email_communication_service_domain.mail.verification_records[0]
 
