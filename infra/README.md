@@ -213,7 +213,7 @@ One-time setup, in this order:
    The domain must be verified before `envs/staging` links to it: the association fails otherwise.
 
 4. Apply `envs/staging` (CI does it on merge). The namespace is registered on the subscription from step 1, so CI's identity needs no right to register it.
-5. Let the api's identity send. CI's Contributor role can't create role assignments, so assign it by hand, once:
+5. Let the api's identity send. CI's Contributor role can't create role assignments, so assign it by hand, once. Run this from the repository root, or replace the `--scope` value with the `communication_service_id` that the staging apply printed:
 
    ```sh
    az role assignment create --assignee-object-id "$(az identity show -n bardery-staging-api -g bardery-staging --query principalId -o tsv)" \
@@ -221,7 +221,7 @@ One-time setup, in this order:
      --scope "$(terraform -chdir=infra/envs/staging output -raw communication_service_id)"
    ```
 
-6. Send a test email from the running api. The CLI runs inside the `api` container, so it never needs network access to the database:
+6. Send a test email from the running api. The CLI exists only in an `api` image built from the change that added it or later, so run this after the deploy that followed that merge (an older image fails with `Cannot find module '/app/dist/admin.mjs'`). The CLI runs inside the `api` container, so it never needs network access to the database:
 
    ```sh
    az containerapp exec -n api -g bardery-staging --command "node dist/admin.mjs email send-test you@example.com"
