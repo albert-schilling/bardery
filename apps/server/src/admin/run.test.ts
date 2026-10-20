@@ -19,7 +19,7 @@ describe("admin email send-test", () => {
     await runAdmin(["email", "send-test", "me@example.com"], context);
     expect(sent).toHaveLength(1);
     expect(sent[0]?.to).toBe("me@example.com");
-    expect(log).toHaveBeenCalledWith("Test email sent to me@example.com");
+    expect(log).toHaveBeenCalledWith("Test email accepted for me@example.com");
   });
 
   it.each([

@@ -10,7 +10,11 @@ export interface AzureEmailSenderOptions {
   timeoutMs?: number;
 }
 
-/** Sends through Azure Communication Services; resolves once Azure has delivered the mail to the recipient's server. */
+/**
+ * Sends through Azure Communication Services; resolves once Azure reports the send as succeeded, which
+ * means it took the mail and handed it on for delivery, not that the mail reached an inbox. What happened
+ * after that is in the delivery-status logs (infra/README.md, Staging email).
+ */
 export function createAzureEmailSender({
   client,
   from,
