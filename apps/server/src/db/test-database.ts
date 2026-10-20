@@ -1,7 +1,11 @@
 import { randomUUID } from "node:crypto";
+import { fileURLToPath } from "node:url";
 
+import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { Client } from "pg";
 import { inject } from "vitest";
+
+import { connectDatabase } from "~/db/client";
 
 export interface TestDatabase {
   url: string;
@@ -19,6 +23,18 @@ export async function createTestDatabase(): Promise<TestDatabase> {
     url: url.toString(),
     drop: () => onServer(serverUrl, `drop database "${name}" with (force)`),
   };
+}
+
+/** Applies the checked-in migrations, as the migrations job does before a deploy. */
+export async function migrateTestDatabase(url: string): Promise<void> {
+  const database = connectDatabase({ url });
+  try {
+    await migrate(database.db, {
+      migrationsFolder: fileURLToPath(new URL("migrations", import.meta.url)),
+    });
+  } finally {
+    await database.close();
+  }
 }
 
 async function onServer(serverUrl: string, statement: string): Promise<void> {

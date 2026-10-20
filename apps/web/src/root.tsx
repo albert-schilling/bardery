@@ -2,6 +2,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { type ReactNode, useState } from "react";
 import { Links, Meta, Outlet, Scripts, ScrollRestoration } from "react-router";
 
+import { AuthProvider, createAuth } from "~/lib/auth";
 import { createApiClient, TRPCProvider } from "~/lib/trpc";
 
 import "./styles/global.scss";
@@ -28,11 +29,14 @@ export function Layout({ children }: { children: ReactNode }) {
 export default function App() {
   const [queryClient] = useState(() => new QueryClient());
   const [apiClient] = useState(() => createApiClient());
+  const [auth] = useState(() => createAuth());
 
   return (
     <QueryClientProvider client={queryClient}>
       <TRPCProvider trpcClient={apiClient} queryClient={queryClient}>
-        <Outlet />
+        <AuthProvider auth={auth}>
+          <Outlet />
+        </AuthProvider>
       </TRPCProvider>
     </QueryClientProvider>
   );

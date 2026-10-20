@@ -10,6 +10,8 @@ const config = {
   DATABASE_URL: "postgres://bardery@127.0.0.1:1/bardery",
   EMAIL_FROM: "noreply@mail.bardery.app",
   SMTP_URL: "smtp://localhost:1025",
+  API_URL: "http://localhost:3000",
+  SIGN_UP_ALLOWLIST: [],
 };
 
 describe("the api server", () => {

@@ -7,7 +7,7 @@ import type { AppRouter } from "@bardery/server/router";
 export const { TRPCProvider, useTRPC } = createTRPCContext<AppRouter>();
 
 /** The api's address, set when the web app is built. Only the dev server falls back to the local server. */
-function resolveApiUrl(): string | undefined {
+export function resolveApiUrl(): string | undefined {
   return (
     import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:3000" : undefined)
   );

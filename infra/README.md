@@ -2,13 +2,13 @@
 
 Terraform (`azurerm`) for everything on Azure, in `swedencentral` (ADR 0004).
 
-| Folder          | What it manages                                                                                                                                                                                                                                                                                                              | State file        |
-| --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
-| `bootstrap/`    | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state                                                                                                                                                                                                            | —                 |
-| `envs/shared/`  | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records                                                                                                                                                                                                                                                  | `shared.tfstate`  |
-| `envs/staging/` | Resource group `bardery-staging`: the Container Apps environment, the Log Analytics workspace, the `web` app serving `apps/web` at `staging.bardery.app`, the `api` app serving `apps/server` at `api.staging.bardery.app`, their DNS records in the shared zone, and the database with its `migrations` job (`database.tf`) | `staging.tfstate` |
-| `envs/prod/`    | Prod (not yet written)                                                                                                                                                                                                                                                                                                       | `prod.tfstate`    |
-| `scripts/`      | Scripts CI runs against Azure: `run-migrations.sh` starts the staging migrations job and waits for it                                                                                                                                                                                                                        | —                 |
+| Folder          | What it manages                                                                                                                                                                                                                                                                                                                                                                  | State file        |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------- |
+| `bootstrap/`    | A script, not Terraform: resource group `bardery-tfstate` with the storage account that holds all Terraform state                                                                                                                                                                                                                                                                | —                 |
+| `envs/shared/`  | Resource group `bardery-shared`: the `bardery.app` DNS zone and its records                                                                                                                                                                                                                                                                                                      | `shared.tfstate`  |
+| `envs/staging/` | Resource group `bardery-staging`: the Container Apps environment, the Log Analytics workspace, the `web` app serving `apps/web` at `staging.bardery.app`, the `api` app serving `apps/server` at `api.staging.bardery.app`, their DNS records in the shared zone, the database with its `migrations` job (`database.tf`), and the Key Vault for the api's secrets (`sign-in.tf`) | `staging.tfstate` |
+| `envs/prod/`    | Prod (not yet written)                                                                                                                                                                                                                                                                                                                                                           | `prod.tfstate`    |
+| `scripts/`      | Scripts CI runs against Azure: `run-migrations.sh` starts the staging migrations job and waits for it                                                                                                                                                                                                                                                                            | —                 |
 
 The state storage lives in its own resource group, outside Terraform, so no Terraform root can delete the state it runs on. It allows Entra ID access only (no account keys), keeps blob versions and soft-deleted blobs for 30 days, and has a delete lock.
 
@@ -230,3 +230,39 @@ One-time setup, in this order:
    The api scales to zero: if the exec says there is no running replica, call `https://api.staging.bardery.app/health` first. In the received message's headers, SPF, DKIM and DMARC all show `pass`.
 
 Locally, `docker compose up --detach` starts Mailpit; `pnpm admin email send-test you@example.com` sends there, and the mail shows up at http://localhost:8025.
+
+## Staging sign-in
+
+The api signs readers in with an email code (Better Auth). Its session cookie is scoped to `staging.bardery.app`, which covers the web app and the api, and its name includes that domain, so prod's cookie on `bardery.app` never stands in for it.
+
+**Secrets in Key Vault.** `sign-in.tf` holds the Key Vault `bardery-staging`, with Azure-role access. The `api` app reads two secrets from it by reference, as its managed identity: `auth-secret`, which signs the session cookie (`AUTH_SECRET`), and `sign-up-allowlist`, the comma-separated emails that may create an Account until invite codes replace the list (`SIGN_UP_ALLOWLIST`). Their values are set by hand, so they are in neither the Terraform state nor a plan, both of which pull requests can read. An email that already has an Account signs in whether or not it is on the list.
+
+One-time setup, before merging the change that adds the vault (a revision whose secrets can't be read fails to start):
+
+1. Register the namespace, which CI's identity can't: `az provider register --namespace Microsoft.KeyVault --wait`.
+2. Create the vault from that change's branch, and keep its ID:
+
+   ```sh
+   terraform -chdir=infra/envs/staging apply -target=azurerm_key_vault.staging
+   vault=$(az keyvault show -n bardery-staging --query id -o tsv)
+   ```
+
+3. Let yourself write secrets, and the api's identity read them. CI's Contributor role can't create role assignments, so this is by hand too:
+
+   ```sh
+   az role assignment create --assignee "$(az ad signed-in-user show --query id -o tsv)" \
+     --role "Key Vault Secrets Officer" --scope "$vault"
+   az role assignment create --assignee-object-id "$(az identity show -n bardery-staging-api -g bardery-staging --query principalId -o tsv)" \
+     --assignee-principal-type ServicePrincipal --role "Key Vault Secrets User" --scope "$vault"
+   ```
+
+4. Set both secrets. A new secret signs everyone out.
+
+   ```sh
+   az keyvault secret set --vault-name bardery-staging --name auth-secret --value "$(openssl rand -base64 48)" --output none
+   az keyvault secret set --vault-name bardery-staging --name sign-up-allowlist --value you@example.com --output none
+   ```
+
+5. Merge; CI applies the rest. Check it: open `https://staging.bardery.app`, sign in with the code that arrives by email, reload (still signed in), and sign out.
+
+To change a secret later, set it again and restart the api, which reads secrets when a revision starts: `az containerapp revision restart -n api -g bardery-staging --revision "$(az containerapp show -n api -g bardery-staging --query properties.latestRevisionName -o tsv)"`.
