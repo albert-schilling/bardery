@@ -196,7 +196,7 @@ One-time setup, in this order:
    az provider register --namespace Microsoft.Communication --wait
    ```
 
-2. Apply `envs/shared` by hand. It creates the domain and the DNS records from the domain's `verification_records`. The record names are known only after the apply, so check them in the DNS zone afterwards: Azure names the domain record with the full domain (`mail.bardery.app`) and the DKIM records relative to it, and `envs/shared/main.tf` puts them all below `mail`. A DKIM record belongs at `selector1-azurecomm-prod-net._domainkey.mail`, not at `selector1-azurecomm-prod-net._domainkey`.
+2. Apply `envs/shared` by hand. It creates the domain, the sender username `noreply` (Azure rejects an address whose username the domain doesn't list, with `InvalidSenderUserName`) and the DNS records from the domain's `verification_records`. The record names are known only after the apply, so check them in the DNS zone afterwards: Azure names the domain record with the full domain (`mail.bardery.app`) and the DKIM records relative to it, and `envs/shared/main.tf` puts them all below `mail`. A DKIM record belongs at `selector1-azurecomm-prod-net._domainkey.mail`, not at `selector1-azurecomm-prod-net._domainkey`.
 3. Ask Azure to verify the domain. Terraform creates the records but can't trigger the check, so run this once, then wait a few minutes until the domain shows `Verified` for both Domain and SPF and DKIM and DKIM2:
 
    ```sh
