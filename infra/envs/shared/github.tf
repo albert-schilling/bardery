@@ -160,8 +160,10 @@ resource "azurerm_role_definition" "container_app_secrets_lister" {
       "Microsoft.App/containerApps/listSecrets/action",
       "Microsoft.App/jobs/listSecrets/action",
       # The provider lists the Communication Service's keys on refresh (envs/staging/email.tf). Those keys
-      # can send mail as mail.bardery.app, so this is a wider permission for pull requests than the others;
-      # accepted because it matches the secrets above and the repository has one owner.
+      # can send mail as mail.bardery.app, so abuse would harm the domain's sender reputation and DMARC
+      # standing. That makes this the one permission here that breaks the plan identity's "can't write
+      # anything" rule. It is accepted because a pull request from a fork gets no OIDC token, so only people
+      # with write access can reach the keys. Revisit if write access is ever given to anyone else.
       "Microsoft.Communication/communicationServices/listKeys/action",
     ]
   }
