@@ -11,6 +11,8 @@ describe("loadConfig", () => {
       DATABASE_URL: "postgres://bardery:bardery@localhost:5432/bardery",
       EMAIL_FROM: "noreply@mail.bardery.app",
       SMTP_URL: "smtp://localhost:1025",
+      API_URL: "http://localhost:3000",
+      SIGN_UP_ALLOWLIST: [],
     });
   });
 
@@ -22,6 +24,8 @@ describe("loadConfig", () => {
       DATABASE_URL: "postgres://bardery:bardery@localhost:5432/bardery",
       EMAIL_FROM: "noreply@mail.bardery.app",
       SMTP_URL: "smtp://localhost:1025",
+      API_URL: "http://localhost:3000",
+      SIGN_UP_ALLOWLIST: [],
     });
   });
 
@@ -73,6 +77,25 @@ describe("loadConfig", () => {
     expect(() => loadConfig({ AZURE_COMMUNICATION_ENDPOINT: "http://x.example" })).toThrow(
       /AZURE_COMMUNICATION_ENDPOINT/,
     );
+  });
+
+  it("reads the sign-in settings, with the allowlist split and in lower case", () => {
+    const config = loadConfig({
+      API_URL: "https://api.staging.bardery.app",
+      AUTH_SECRET: "a".repeat(32),
+      COOKIE_DOMAIN: "staging.bardery.app",
+      SIGN_UP_ALLOWLIST: "Parent@Example.com, other@example.com",
+    });
+    expect(config).toMatchObject({
+      API_URL: "https://api.staging.bardery.app",
+      AUTH_SECRET: "a".repeat(32),
+      COOKIE_DOMAIN: "staging.bardery.app",
+      SIGN_UP_ALLOWLIST: ["parent@example.com", "other@example.com"],
+    });
+  });
+
+  it("rejects a short secret, naming the variable", () => {
+    expect(() => loadConfig({ AUTH_SECRET: "short" })).toThrow(/AUTH_SECRET/);
   });
 
   it("rejects an empty version, as a build that didn't set it would have", () => {

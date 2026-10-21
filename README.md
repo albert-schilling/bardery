@@ -30,7 +30,10 @@ pnpm install
 docker compose up --detach         # Postgres with pgvector
 pnpm nx migrate-database server    # applies the migrations
 pnpm nx dev server                 # the api on http://localhost:3000
+pnpm nx dev web                    # the web app on http://localhost:5173
 ```
+
+To sign in, start the api with your email on the allowlist (`SIGN_UP_ALLOWLIST=you@example.com pnpm nx dev server`), and read the code at Mailpit, `http://localhost:8025`.
 
 `http://localhost:3000/trpc/health` then reports the database as `up`. After changing `apps/server/src/db/schema.ts`, generate its migration with `pnpm --filter @bardery/server exec drizzle-kit generate` and commit it; CI's `check-migrations` fails otherwise. The server's tests start their own Postgres in Docker.
 

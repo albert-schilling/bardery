@@ -9,7 +9,9 @@ docker build --quiet --file "$root/apps/server/Dockerfile" --build-arg VERSION=t
 network=$(docker network create "bardery-test-$$")
 database=$(docker run --detach --network "$network" --network-alias postgres --env POSTGRES_PASSWORD=test \
   "$(docker compose --file "$root/docker-compose.yml" config --images | grep pgvector)")
-container=$(docker run --detach --publish 127.0.0.1::3000 "$image")
+# A deployed server refuses to start without these; nothing connects to the endpoint in this test.
+container=$(docker run --detach --publish 127.0.0.1::3000 --env AUTH_SECRET="$(printf 'x%.0s' {1..32})" \
+  --env API_URL=https://api.bardery.example --env AZURE_COMMUNICATION_ENDPOINT=https://bardery.example "$image")
 trap 'docker rm --force "$container" "$database" > /dev/null; docker network rm "$network" > /dev/null' EXIT
 url="http://$(docker port "$container" 3000)"
 

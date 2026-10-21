@@ -9,7 +9,8 @@ describe("health", () => {
       repository: { isDatabaseReachable: async () => true },
       version: "abc123",
     });
-    const caller = appRouter.createCaller({ services: { health } });
+    const accounts = { get: () => Promise.reject(new Error("not called")) };
+    const caller = appRouter.createCaller({ services: { accounts, health }, session: null });
 
     expect(await caller.health()).toEqual({ status: "ok", version: "abc123", database: "up" });
   });
