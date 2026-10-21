@@ -231,11 +231,18 @@ One-time setup, in this order:
 
 Locally, `docker compose up --detach` starts Mailpit; `pnpm admin email send-test you@example.com` sends there, and the mail shows up at http://localhost:8025.
 
-**Did the mail arrive?** The CLI's "Test email accepted" means Azure took the message and handed it on for delivery. It does not say the message reached the inbox, was filtered as spam or bounced. That is in the delivery-status logs, which `envs/staging/email.tf` sends to the `bardery-staging` Log Analytics workspace. In the portal, open the workspace's _Logs_ and run, a few minutes after a send:
+**Did the mail arrive?** The CLI's "Test email accepted" means Azure took the message and handed it on for delivery. It does not say the message reached the inbox, was filtered as spam or bounced. That is in the delivery-status logs, which `envs/staging/email.tf` sends to the `bardery-staging` Log Analytics workspace. In the portal, open the workspace's _Logs_ and run each query on its own, a few minutes after a send. The editor runs the query under the cursor, so keep a blank line between them:
 
 ```kusto
-ACSEmailSendMailOperational | where TimeGenerated > ago(1h) | order by TimeGenerated desc
-ACSEmailStatusUpdateOperational | where TimeGenerated > ago(1h) | order by TimeGenerated desc
+ACSEmailSendMailOperational
+| where TimeGenerated > ago(1h)
+| order by TimeGenerated desc
 ```
 
-The first table has the send requests, the second one row per recipient with its `DeliveryStatus` (for example Delivered, Failed, Bounced, FilteredSpam or Quarantined). Both carry the message ID, which links a send to its result. The logs record only from the apply that created them, so a send from before then is not in them. A hard-bounced address is suppressed for 24 hours, and repeat bounces extend that to 14 days, so retesting it right away can look like a send that silently went nowhere.
+```kusto
+ACSEmailStatusUpdateOperational
+| where TimeGenerated > ago(1h)
+| order by TimeGenerated desc
+```
+
+The first table has the send requests, the second one row per recipient with its `DeliveryStatus` (for example Delivered, Failed, Bounced, FilteredSpam or Quarantined). The `CorrelationId` column holds the message ID in both tables, so it links a send to its result. The logs record only from the apply that created them, so a send from before then is not in them. A hard-bounced address is suppressed for 24 hours, and repeat bounces extend that to 14 days, so retesting it right away can look like a send that silently went nowhere.

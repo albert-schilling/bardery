@@ -30,29 +30,22 @@ locals {
 # on staging. It's assigned once by hand (infra/README.md, Staging email).
 
 # The send and delivery-status logs of the Communication Service, which Azure Monitor's email views and
-# queries read; without them nothing records what happened to a message after Azure accepted it.
-# The category names are looked up from the resource, because the exact names aren't something to guess:
-# a wrong one fails the apply. They match on "SendMail" and "StatusUpdate" (tables ACSEmailSendMailOperational
-# and ACSEmailStatusUpdateOperational).
-data "azurerm_monitor_diagnostic_categories" "communication" {
-  resource_id = azurerm_communication_service.staging.id
-}
-
+# queries read; without them nothing records what happened to a message after Azure accepted it. The
+# tables are ACSEmailSendMailOperational and ACSEmailStatusUpdateOperational.
 resource "azurerm_monitor_diagnostic_setting" "communication" {
   name                       = "email-logs"
   target_resource_id         = azurerm_communication_service.staging.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.staging.id
 
-  # One table per kind of log (ACSEmail…), not the shared AzureDiagnostics table.
+  # Resource-specific tables (ACSEmail…). If a plan keeps showing this argument changing, remove it: for
+  # some resource types Azure does not store it, and the provider then plans the change on every run.
   log_analytics_destination_type = "Dedicated"
 
-  dynamic "enabled_log" {
-    for_each = toset(["SendMail", "StatusUpdate"])
-    content {
-      category = one([
-        for category in data.azurerm_monitor_diagnostic_categories.communication.log_category_types :
-        category if strcontains(category, enabled_log.value)
-      ])
-    }
+  enabled_log {
+    category = "EmailSendMailOperational"
+  }
+
+  enabled_log {
+    category = "EmailStatusUpdateOperational"
   }
 }
