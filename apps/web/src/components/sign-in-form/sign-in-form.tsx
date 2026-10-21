@@ -14,10 +14,15 @@ export function SignInForm() {
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
+  // So a resend that worked says so, and isn't clicked again for nothing.
+  const [resent, setResent] = useState(false);
 
   const sendCode = useMutation({
     mutationFn: () => auth.sendCode(email),
-    onSuccess: () => setCodeSent(true),
+    onSuccess: () => {
+      setResent(codeSent);
+      setCodeSent(true);
+    },
   });
   const signIn = useMutation({
     mutationFn: () => auth.signIn(email, code),
@@ -42,8 +47,10 @@ export function SignInForm() {
 
   function useAnotherEmail() {
     setCodeSent(false);
+    setResent(false);
     setCode("");
     signIn.reset();
+    sendCode.reset();
   }
 
   // On the code step, sending a new code can fail too.
@@ -53,7 +60,9 @@ export function SignInForm() {
       <h1 className="sign-in-form__title">Sign in</h1>
       {codeSent ? (
         <>
-          <p className="sign-in-form__hint">We emailed a code to {email}.</p>
+          <p className="sign-in-form__hint">
+            We emailed {resent ? "a new code" : "a code"} to {email}.
+          </p>
           <label className="sign-in-form__field">
             Code
             <input

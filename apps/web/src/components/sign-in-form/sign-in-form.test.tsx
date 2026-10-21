@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
@@ -82,7 +82,10 @@ describe("SignInForm", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Send a new code" }));
 
-    await waitFor(() => expect(sendCode).toHaveBeenCalledTimes(2));
+    expect(
+      await screen.findByText("We emailed a new code to parent@example.com."),
+    ).toBeInTheDocument();
+    expect(sendCode).toHaveBeenCalledTimes(2);
     expect(sendCode).toHaveBeenLastCalledWith("parent@example.com");
     expect(screen.getByLabelText("Code")).toHaveValue("");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
@@ -101,5 +104,9 @@ describe("SignInForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send a new code" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Too many tries.");
+    expect(screen.getByText("We emailed a code to parent@example.com.")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Use another email" }));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   });
 });
