@@ -13,7 +13,10 @@ function fakeFetch(status: number, body: object) {
 }
 
 describe("createAuth", () => {
-  afterEach(() => vi.unstubAllEnvs());
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.restoreAllMocks();
+  });
 
   it("asks the api for a sign-in code, with the session cookie", async () => {
     vi.stubEnv("VITE_API_URL", "https://api.example");
@@ -28,13 +31,27 @@ describe("createAuth", () => {
 
   it.each([
     [400, "INVALID_OTP", "That code isn't right. Check it and try again."],
-    [400, "OTP_EXPIRED", "That code no longer works. Ask for a new one."],
-    [403, "TOO_MANY_ATTEMPTS", "That code no longer works. Ask for a new one."],
+    [400, "OTP_EXPIRED", "That code no longer works. Send a new one."],
+    [403, "TOO_MANY_ATTEMPTS", "That code no longer works. Send a new one."],
     [429, undefined, "Too many tries. Wait a while, then try again."],
     [500, undefined, "Something went wrong. Try again."],
-  ])("rejects a %i %s with a message for the reader", async (status, code, message) => {
+  ])("rejects a %i %s with a message to show", async (status, code, message) => {
     const { fetch } = fakeFetch(status, { code, message: "from the api" });
 
     await expect(createAuth(fetch).signIn("parent@example.com", "123456")).rejects.toThrow(message);
+  });
+
+  it("fails every call, without calling the web app's own host, when the address is missing", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    // A production build made without the variable.
+    vi.stubEnv("VITE_API_URL", "");
+    vi.stubEnv("DEV", false);
+    const { fetch, requests } = fakeFetch(200, { success: true });
+
+    const auth = createAuth(fetch);
+
+    await expect(auth.sendCode("parent@example.com")).rejects.toThrow("VITE_API_URL");
+    await expect(auth.signOut()).rejects.toThrow("VITE_API_URL");
+    expect(requests).toEqual([]);
   });
 });

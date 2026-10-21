@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
@@ -49,7 +49,7 @@ describe("SignInForm", () => {
     expect(screen.getByLabelText("Email")).toBeInTheDocument();
   });
 
-  it("says why a code failed, and lets the reader start again with another email", async () => {
+  it("says why a code failed, and lets them start again with another email", async () => {
     const signIn = async () => {
       throw new Error("That code isn't right. Check it and try again.");
     };
@@ -65,5 +65,41 @@ describe("SignInForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Use another email" }));
     expect(screen.getByLabelText("Email")).toHaveValue("parent@example.com");
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("sends a new code to the same email, clearing the old code and its error", async () => {
+    const sendCode = vi.fn(async () => {});
+    const signIn = async () => {
+      throw new Error("That code no longer works. Send a new one.");
+    };
+    renderForm(fakeAuth({ sendCode, signIn }));
+    type("Email", "parent@example.com");
+    fireEvent.click(screen.getByRole("button", { name: "Send code" }));
+    await screen.findByLabelText("Code");
+    type("Code", "000000");
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+    await screen.findByRole("alert");
+
+    fireEvent.click(screen.getByRole("button", { name: "Send a new code" }));
+
+    await waitFor(() => expect(sendCode).toHaveBeenCalledTimes(2));
+    expect(sendCode).toHaveBeenLastCalledWith("parent@example.com");
+    expect(screen.getByLabelText("Code")).toHaveValue("");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("says why when a new code can't be sent", async () => {
+    const sendCode = vi
+      .fn<(email: string) => Promise<void>>()
+      .mockResolvedValueOnce()
+      .mockRejectedValueOnce(new Error("Too many tries. Wait a while, then try again."));
+    renderForm(fakeAuth({ sendCode }));
+    type("Email", "parent@example.com");
+    fireEvent.click(screen.getByRole("button", { name: "Send code" }));
+    await screen.findByLabelText("Code");
+
+    fireEvent.click(screen.getByRole("button", { name: "Send a new code" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Too many tries.");
   });
 });

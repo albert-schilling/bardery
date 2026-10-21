@@ -3,10 +3,10 @@ import { Navigate, Outlet } from "react-router";
 
 import { useTRPC } from "~/lib/trpc";
 
-/** Shows its pages to a signed-in reader only, and sends anyone else to the sign-in page. */
+/** Shows its pages to a signed-in Account only, and sends anyone else to the sign-in page. */
 export default function SignedIn() {
   const trpc = useTRPC();
-  // An anonymous reader gets the same answer on every try, so there's nothing to retry.
+  // Someone signed out gets the same answer on every try, so there's nothing to retry.
   const me = useQuery(trpc.me.queryOptions(undefined, { retry: false }));
 
   if (me.isPending) return null;

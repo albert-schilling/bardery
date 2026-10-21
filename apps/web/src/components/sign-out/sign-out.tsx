@@ -13,7 +13,7 @@ export function SignOut({ email }: { email: string }) {
   const signOut = useMutation({
     mutationFn: () => auth.signOut(),
     onSuccess: async () => {
-      // Nothing the signed-in reader saw stays in the cache for the next one.
+      // Nothing the signed-in Account saw stays in the cache for whoever signs in next.
       queryClient.clear();
       await navigate("/sign-in", { replace: true });
     },

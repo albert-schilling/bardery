@@ -6,7 +6,7 @@ import { useAuth } from "~/lib/auth";
 
 import "./sign-in-form.scss";
 
-/** Two steps: the reader's email, then the code that was emailed to it. */
+/** Two steps: the Account's email, then the code that was emailed to it. */
 export function SignInForm() {
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -22,7 +22,7 @@ export function SignInForm() {
   const signIn = useMutation({
     mutationFn: () => auth.signIn(email, code),
     onSuccess: async () => {
-      // Answers cached while signed out, such as `me` failing, would hold the new reader back.
+      // Answers cached while signed out, such as `me` failing, would hold the new Account back.
       queryClient.clear();
       await navigate("/", { replace: true });
     },
@@ -34,13 +34,20 @@ export function SignInForm() {
     else sendCode.mutate();
   }
 
+  function sendNewCode() {
+    setCode("");
+    signIn.reset();
+    sendCode.mutate();
+  }
+
   function useAnotherEmail() {
     setCodeSent(false);
     setCode("");
     signIn.reset();
   }
 
-  const error = codeSent ? signIn.error : sendCode.error;
+  // On the code step, sending a new code can fail too.
+  const error = codeSent ? (signIn.error ?? sendCode.error) : sendCode.error;
   return (
     <form className="sign-in-form" onSubmit={submit}>
       <h1 className="sign-in-form__title">Sign in</h1>
@@ -62,6 +69,14 @@ export function SignInForm() {
           </label>
           <button className="sign-in-form__submit" disabled={signIn.isPending}>
             Sign in
+          </button>
+          <button
+            className="sign-in-form__back"
+            type="button"
+            onClick={sendNewCode}
+            disabled={sendCode.isPending}
+          >
+            Send a new code
           </button>
           <button className="sign-in-form__back" type="button" onClick={useAnotherEmail}>
             Use another email

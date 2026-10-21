@@ -38,7 +38,7 @@ export function createAuth(deps: { config: Config; db: Database; signIn: SignInS
         crossSubDomainCookies: { enabled: true, domain: config.COOKIE_DOMAIN },
       }),
       // Emails go out after the response, so its timing doesn't tell whether an address has an
-      // Account. Better Auth logs a failed send; the reader asks for a new code.
+      // Account. Better Auth logs a failed send; the person asks for a new code.
       backgroundTasks: {
         handler: (task) => {
           task.catch((error: unknown) => console.error("background task failed:", error));

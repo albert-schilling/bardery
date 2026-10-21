@@ -233,7 +233,7 @@ Locally, `docker compose up --detach` starts Mailpit; `pnpm admin email send-tes
 
 ## Staging sign-in
 
-The api signs readers in with an email code (Better Auth). Its session cookie is scoped to `staging.bardery.app`, which covers the web app and the api, and its name includes that domain, so prod's cookie on `bardery.app` never stands in for it.
+The api signs Accounts in with an email code (Better Auth). Its session cookie is scoped to `staging.bardery.app`, which covers the web app and the api, and its name includes that domain, so prod's cookie on `bardery.app` never stands in for it.
 
 **Secrets in Key Vault.** `sign-in.tf` holds the Key Vault `bardery-staging`, with Azure-role access. The `api` app reads two secrets from it by reference, as its managed identity: `auth-secret`, which signs the session cookie (`AUTH_SECRET`), and `sign-up-allowlist`, the comma-separated emails that may create an Account until invite codes replace the list (`SIGN_UP_ALLOWLIST`). Their values are set by hand, so they are in neither the Terraform state nor a plan, both of which pull requests can read. An email that already has an Account signs in whether or not it is on the list.
 

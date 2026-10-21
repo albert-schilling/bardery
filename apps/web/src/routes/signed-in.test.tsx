@@ -15,13 +15,13 @@ function renderGuarded(me: () => unknown) {
 }
 
 describe("the signed-in guard", () => {
-  it("shows its pages to a signed-in reader", async () => {
+  it("shows its pages to a signed-in Account", async () => {
     renderGuarded(() => ({ id: "a1", email: "parent@example.com" }));
 
     expect(await screen.findByText("A signed-in page")).toBeInTheDocument();
   });
 
-  it("sends an anonymous reader to the sign-in page", async () => {
+  it("sends someone signed out to the sign-in page", async () => {
     renderGuarded(() => {
       throw new UnauthorizedError();
     });

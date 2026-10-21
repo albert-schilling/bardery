@@ -19,7 +19,7 @@ export function fakeAuth(overrides: Partial<Auth> = {}): Auth {
 
 /**
  * Wraps a component in the tRPC and auth providers, with a client whose procedures answer from
- * `answers`; an answer that throws `UnauthorizedError` fails as for an anonymous reader.
+ * `answers`; an answer that throws `UnauthorizedError` fails as for an anonymous call.
  */
 export function withMockApi(answers: Record<string, () => unknown>, auth: Auth = fakeAuth()) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
@@ -69,5 +69,5 @@ export function withMockApi(answers: Record<string, () => unknown>, auth: Auth =
   };
 }
 
-/** Thrown by an answer to make the procedure fail as it does for an anonymous reader. */
+/** Thrown by an answer to make the procedure fail as it does for an anonymous call. */
 export class UnauthorizedError extends Error {}
