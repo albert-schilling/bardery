@@ -72,7 +72,7 @@ How it runs: interactive, one agent session at a time, the human starts every st
 
 1. ~~Remaining authors~~ (done 2026-11-03).
 2. ~~The Claude Code team's blog posts~~ (done 2026-11-03), starting with [Solving code review at Anthropic](https://claude.dev/blog/solving-code-review-at-anthropic/).
-3. Scientific papers published in 2026 (e.g. via Google Scholar) on software factories, harness engineering and AI-assisted coding: read the abstracts and build a table of title, authors, commissioner (company or university), date, tags and important points for a software factory.
+3. ~~Scientific papers~~ (done 2026-11-03: [paper table](2026-11-03-software-factory-papers.md)). Scientific papers published in 2026 (e.g. via Google Scholar) on software factories, harness engineering and AI-assisted coding: read the abstracts and build a table of title, authors, commissioner (company or university), date, tags and important points for a software factory.
 
 ## Where Bardery deliberately differs
 
