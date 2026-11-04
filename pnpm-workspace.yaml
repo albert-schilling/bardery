@@ -2,6 +2,7 @@ packages:
   - apps/*
   - packages/*
   - packages/shared/*
+  - tools/*
 
 # No dependency needs its install script; list each new one here as `false`.
 allowBuilds:

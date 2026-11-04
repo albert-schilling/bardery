@@ -1,0 +1,7 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "harness",
+  "projectType": "library",
+  "sourceRoot": "tools/harness/src",
+  "tags": ["scope:harness"]
+}
