@@ -1,6 +1,6 @@
 # Grilling session 3: the Factory (2026-11-04)
 
-Record of the session that settled the shape of the Factory's first iteration (issue #34): Q94–Q122. It follows the research in [`docs/research/2026-10-21-software-factory.md`](../research/2026-10-21-software-factory.md) (authors, gaps G1–G33) and [`docs/research/2026-11-03-software-factory-papers.md`](../research/2026-11-03-software-factory-papers.md) (55 papers from 2026). The design tree has no open branches; the next step is the build issues below.
+Record of the session that settled the shape of the Factory's first iteration (issue #34): Q94–Q122. It follows the research in [`docs/research/2026-10-21-software-factory.md`](../research/2026-10-21-software-factory.md) (authors, gaps G1–G33) and [`docs/research/2026-11-03-software-factory-papers.md`](../research/2026-11-03-software-factory-papers.md) (58 papers from 2026). The design tree has no open branches; the next step is the build issues below.
 
 Answers are final. Where an answer was revised during the session, only the final one is listed.
 
@@ -43,15 +43,15 @@ The Factory is the agent workflow that turns an issue into a merged pull request
 ## Quality
 
 - **Q106 Tests**: a separate test-writer writes the tests before implementation. The implementer is blocked from editing test files by a hook in its agent definition; if it thinks a test is wrong, it stops and says so. The implementer doesn't run `tdd`. Test strength is measured by mutation testing on changed code from iteration 2; iteration 1 checks that tests assert something and relies on the test-writer's second pass.
-- **Q107 Models and effort** (a starting point, adjusted from the measurements in Q110):
+- **Q107 Models and effort** (a starting point, adjusted from the measurements in Q110; the agent definitions name the concrete model IDs):
 
   | Role         | Model                    | Effort |
   | ------------ | ------------------------ | ------ |
-  | Research     | Sonnet 5.5               | low    |
-  | Planner      | Opus 5.5                 | high   |
-  | Test-writer  | Opus 5.5                 | high   |
-  | Implementer  | Sonnet 5.5               | medium |
-  | Reviewers    | Opus 5.5                 | high   |
+  | Research     | Sonnet                   | low    |
+  | Planner      | Opus                     | high   |
+  | Test-writer  | Opus                     | high   |
+  | Implementer  | Sonnet                   | medium |
+  | Reviewers    | Opus                     | high   |
   | Orchestrator | the main session's model |        |
 
 - **Q108 Reviewers**: two, each in a fresh context. **Spec**: does the change do what the issue and the alignment document say, and nothing more? **Standards**: the conventions, Ousterhout's red flags, test quality, and cheat detection (deleted, skipped or weakened tests). They commit fixes within the pull request's scope; anything outside it is filed as an issue labelled `pre-existing`. Every finding is fixed or answered with a reason. After three rounds the reviewers stop and ask. High-tier pull requests also get a security review.
