@@ -14,9 +14,12 @@ Node and pnpm versions are pinned in `.node-version` and `package.json`.
 
 `.claude/settings.json` runs [`tools/harness/src/stop-hook.sh`](../../tools/harness/src/stop-hook.sh) when a Claude Code turn ends. It runs `pnpm validate`, prints nothing on success, and on failure returns the output with exit code 2, so the turn continues until the checks pass. Its timeout is 20 minutes, because a change that affects every project builds and tests the images. JSON has no comments, so the reason lives here.
 
-## The Factory's agents
+## The Factory
 
-The Factory's phase agents are in `.claude/agents/factory-*.md`; each ends with the result format in `.agents/skills/factory-result/`. They name nothing of Bardery's own: they read paths, labels, the validate command, test file globs and risk tiers from `.claude/factory.json`, and `factory-agents.test.ts` fails if a value from that file appears in them. JSON has no comments, so the reasons live here:
+A person starts a run with `/factory <issue>`, the skill in `.agents/skills/factory/`. It dispatches the phase agents in `.claude/agents/factory-*.md`, each of which ends with the result format in `.agents/skills/factory-result/`. None of them names anything of Bardery's own: they read paths, labels, commands, test file globs and risk tiers from `.claude/factory.json`, and `factory-agents.test.ts` fails if a value from that file appears in them, or if the skill names a `config.<key>` the file doesn't have. JSON has no comments, so the reasons live here:
+
+- `setup` runs in a run's fresh worktree, which has no `node_modules`.
+- `pullRequestSkill` names the skill that shapes a pull request body.
 
 - `testFiles` also covers test helpers (`test-*.ts`, `test-*.tsx`, `test-*.sh`) and Vitest configs and setup files, because changing them can make a failing test pass. `factory-agents.test.ts` fails if a tracked file named like one of them is missing from the globs.
 - `riskTiers`: for each changed path the first rule that matches sets its tier, so the high-tier paths come before the low-tier docs and tests; the change takes its paths' highest tier.
@@ -33,3 +36,4 @@ Nx counts a file towards no project unless it lies under a project's folder, so 
 - oxlint's regexes (e.g. `no-restricted-imports` `regex` patterns) have no lookahead; a pattern with `(?!…)` silently matches nothing. Use `group` patterns with `!` negation instead.
 - Claude Code skips an agent's frontmatter hooks until the folder's workspace trust dialog has been accepted, and logs it only to the debug log; a fresh cloud container hasn't accepted it. Check a hook with `--debug` or by passing it through `--settings`.
 - An agent's `skills:` preload reaches it only when it runs as a sub-agent; `claude --agent <name>` starts it without them.
+- A git worktree inside the repository (a Factory run's, under `.claude/worktrees/`) holds a second copy of every `project.json`, so Nx refuses to start and oxfmt checks every file twice. `.gitignore` excludes `.claude/worktrees/`, which all three tools respect.
