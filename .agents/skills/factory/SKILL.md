@@ -17,11 +17,11 @@ Read `.claude/factory.json` first. Everything about this repository comes from i
 
 The issue holds the run's state, so a run can stop and later resume in another session. Keep three comments on it, each found by the hidden marker on its first line and edited in place, never posted twice:
 
-- `<!-- factory:run -->` **Run log**: the branch, the worktree, the phase reached, each Stop (phase, questions, answers, where each answer was recorded), review rounds, and the friction collected so far.
+- `<!-- factory:run -->` **Run log**: the branch, the worktree, the phase reached, the Risk Tier, each Stop (phase, questions, answers, where each answer was recorded), the friction from every result, and, until the pull request exists, each review round's findings with their answers and the evidence gathered so far.
 - `<!-- factory:research -->` **Research summary**: the questions and the researcher's answers.
-- `<!-- factory:alignment-document -->` **Alignment Document**, with a status line: `Status: awaiting review`, then `Status: approved <date>`.
+- `<!-- factory:alignment-document -->` **Alignment Document**, with a status line: `Status: awaiting review`, then `Status: approved <date>`, and the approved Risk Tier, noting when the person set it.
 
-Review findings, their answers and the evidence go in the pull request. Write no planning files.
+Write every result to the run log before you move on or stop, so nothing lives only in the session. Once the pull request exists, review findings, their answers and the evidence go in it. Write no planning files.
 
 **Resume**: if the run log exists, continue from the phase it names. The comments are the source of truth: the person may have edited them, so read them again rather than relying on what you remember.
 
@@ -39,10 +39,14 @@ When a check fails, send the phase back to its agent naming the failed check. Wh
 
 Start the phase's agent with the Agent tool, in the foreground. Its prompt holds what the agent's definition says it receives, and nothing more. Its last message is a `factory-result`:
 
-- `## Result: done`: run the checks, add its friction to the run log, move on.
-- `## Result: blocked`: a Stop. Follow [`stops.md`](stops.md), then resume the same phase.
+- `## Result: done`: run the checks, record it in the run log, move on.
+- `## Result: blocked`: record it in the run log; it is a Stop. Follow [`stops.md`](stops.md), then resume the same phase.
 
 Update the run log's phase after each phase.
+
+## Risk Tier
+
+Work it out from the change as it stands: apply `config.riskTiers` to every path changed from the base (`git merge-base HEAD origin/<default branch>`); the first matching rule sets a path's tier, and the highest tier of any path is the minimum. The Risk Tier is the approved one, or this minimum if that is higher, with one exception: a tier the person set at the review keeps its value for the paths the Alignment Document planned. When the change reaches a path whose tier is higher than that, it is a Stop: ask the person which tier holds. Record the tier in the run log each time it changes.
 
 ## Phases
 
@@ -80,7 +84,7 @@ Dispatch `factory-test-writer` with the issue, the Alignment Document and "first
 
 ### 7. Implementation
 
-Dispatch `factory-implementer` with the issue, the Alignment Document and the test commit. Check, in addition, that no file matching `config.testFiles` changed since the test commit.
+Dispatch `factory-implementer` with the issue, the Alignment Document and the test commit. Check, in addition, that no file matching `config.testFiles` changed since the test baseline: the test commit, or a correction a Stop approved ([`stops.md`](stops.md)). Keep the baseline in the run log.
 
 ### 8. Tests, second pass
 
@@ -88,13 +92,13 @@ Dispatch `factory-test-writer` with the issue, the Alignment Document, "second p
 
 ### 9. Review
 
-Record the base: `git merge-base HEAD origin/<default branch>`. A round runs `factory-reviewer-spec`, then `factory-reviewer-standards`, one after the other because both commit to the worktree. Each gets the issue, the Alignment Document, the base and, from round two, every earlier finding with its answer.
+Work out the Risk Tier first; it decides the security review below. A round runs `factory-reviewer-spec`, then `factory-reviewer-standards`, one after the other because both commit to the worktree. Each gets the issue, the Alignment Document, the base and, from round two, every earlier finding with its answer.
 
 - Every finding is fixed (a commit) or answered with a reason; keep the list for the pull request.
 - **Findings in untouched code**: search the open issues for a duplicate; file the rest from `config.issueTemplate`, labelled `config.labels.preExisting`, and link them in the pull request.
 - A round with no fix commits ends the review. After three rounds, stop and ask the person whether to run another round, accept the open findings, or take over.
 
-For a High Risk Tier, then run the `security-review` skill. Send its findings in the change's scope to `factory-implementer` as a fix, and list them in the pull request with their answers.
+Then work out the Risk Tier again, since fixes may have added paths. For High, run the `security-review` skill. Send its findings in the change's scope to `factory-implementer` as a fix, and list them in the pull request with their answers.
 
 ### 10. Verify
 
@@ -104,7 +108,7 @@ Run `config.validate` in the worktree. On failure, send the output to `factory-i
 
 Size: count the changed lines from the base; above `config.maxChangedLines`, say so in the pull request and why it wasn't split.
 
-Risk Tier: apply `config.riskTiers` to every changed path (the first matching rule sets a path's tier; the highest tier of any path is the minimum). It is the approved Alignment Document's tier, or this minimum if that is higher.
+Risk Tier: work it out once more. If it rose to High after the security review was skipped, run it now, as in Review.
 
 Push the branch and open the pull request against the default branch, titled like the issue. Write its body with the `config.pullRequestSkill` skill: its evidence is the tests with their failure before implementation and the final `config.validate` summary; its merge danger is the door (one-way or two-way) and the blast radius. Add:
 
@@ -129,4 +133,6 @@ Act only on what the person accepts:
 - Bigger harness changes: issues from `config.issueTemplate`.
 - Friction: search the issues for each first (open and closed); file the rest labelled `config.labels.friction`.
 
-Fill in the run's row in the Factory runs table of `config.harnessLog`, following the column definitions above it; ask the person for their review minutes. Commit it as `harness:` and push. Update the run log to `retro done`, leave the worktree with ExitWorktree (`keep`), and end with the pull request's link and what the person does next.
+Fill in the run's row in the Factory runs table of `config.harnessLog`, following the column definitions above it; ask the person for their review minutes. Commit it as `harness:`.
+
+When the retro changed more than the harness log, the reviewed change is no longer what goes out: run one more Review round on those commits, work out the Risk Tier again (with the security review if it is now High), and run `config.validate`. Push, and update the pull request's Risk Tier, Review and Evidence to the final commits. Update the run log to `retro done`, leave the worktree with ExitWorktree (`keep`), and end with the pull request's link and what the person does next.

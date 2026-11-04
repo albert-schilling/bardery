@@ -20,6 +20,8 @@ Recording in a file is a `harness:` commit on the run's branch. When it is uncle
 
 ## 3. Resume
 
-Send the answers to the same agent with SendMessage, so it keeps its context, naming where each was recorded. If the agent is gone (a new session), start the phase again with its original prompt plus the answers. Then run the checks as for any result.
+When the person agrees that a test is wrong, the implementer can't fix it: its hook denies test edits. Dispatch `factory-test-writer` with the issue, the Alignment Document, the test, and the correction as the person decided it; check its commit as in the first pass. That commit is the new test baseline: from here, phase 7's check compares against it. Then resume the implementer, naming the commit.
+
+Otherwise send the answers to the same agent with SendMessage, so it keeps its context, naming where each was recorded. If the agent is gone (a new session), start the phase again with its original prompt plus the answers. Then run the checks as for any result.
 
 If the person decides to end the run instead, set the run log's phase to `stopped`, with the reason, and leave the worktree with ExitWorktree (`keep`).
