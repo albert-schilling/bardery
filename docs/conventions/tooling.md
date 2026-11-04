@@ -29,3 +29,5 @@ The Factory's phase agents are in `.claude/agents/factory-*.md`; each ends with 
 - A nested `.oxlintrc.json` replaces the root one instead of merging with it. Even with `extends` it loses the root's path-based `overrides`, so per-folder rules go in the root config with paths from the repo root.
 - A package script whose name is an Nx command (`migrate`, `release`, `graph`, …) can't be run as `pnpm nx <name> <project>`: Nx runs its own command. Name targets so they don't shadow one.
 - oxlint's regexes (e.g. `no-restricted-imports` `regex` patterns) have no lookahead; a pattern with `(?!…)` silently matches nothing. Use `group` patterns with `!` negation instead.
+- Claude Code skips an agent's frontmatter hooks until the folder's workspace trust dialog has been accepted, and logs it only to the debug log; a fresh cloud container hasn't accepted it. Check a hook with `--debug` or by passing it through `--settings`.
+- An agent's `skills:` preload reaches it only when it runs as a sub-agent; `claude --agent <name>` starts it without them.
