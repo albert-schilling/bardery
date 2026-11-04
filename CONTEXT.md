@@ -63,3 +63,27 @@ _Avoid_: Theme, art style (as a per-Story choice)
 **Narrator**:
 One of three voices that can read a Story aloud.
 _Avoid_: Speaker, voice actor
+
+## Engineering
+
+Terms for how Bardery is built, not for the product. See [grilling session 3](docs/grilling/2026-11-04-factory-session.md).
+
+**Factory**:
+The agent workflow that turns an issue into a merged pull request through fixed phases, stopping whenever it needs a person's decision. It produces trust and quality, not only features.
+_Avoid_: Pipeline, dark factory, autopilot
+
+**Alignment Document**:
+The Factory's plan for one issue, reviewed by a person before any code is written: design discussion, structure outline, test plan and risk tier. Kept as a comment on the issue.
+_Avoid_: Plan, spec (the issue is the spec)
+
+**Stop**:
+A point where the Factory pauses for a person: planned at the Alignment Document, or raised by any phase that meets an open question. Each answer is recorded where it belongs.
+_Avoid_: Blocker, interruption
+
+**Risk Tier**:
+High, medium or low, set by the change's paths and raised by the planner. It decides whether a person reads the code.
+_Avoid_: Priority, severity
+
+**Friction**:
+A papercut an agent hit but didn't fix because it was outside its issue, filed as an issue labelled `friction`.
+_Avoid_: Tech debt (broader), bug (when the product works)
