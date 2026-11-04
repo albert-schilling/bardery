@@ -36,7 +36,7 @@ The Factory is the agent workflow that turns an issue into a merged pull request
   11. **Retro** (Q115).
 - **Q104 Stops**: any phase may stop when something is unclear, instead of assuming. A sub-agent's result is structured: `done`, or `blocked` with numbered questions, each with a recommended answer. The orchestrator asks the user and records the answer where it belongs: issue-specific answers in the issue; conventions (naming, tests, structure) in the matching `docs/conventions/` file, from where they can become checks; product and domain decisions in `CONTEXT.md`, an ADR or a grilling record. Then the phase resumes.
 - **Q105 State**: the issue and the pull request hold the Factory's state. Each artifact (research summary, alignment document, test plan) is one issue comment, edited in place; review findings and evidence go in the pull request. No planning files are committed, so they can't go stale in the repo.
-- **Q112 Intake gate and first runs**: only issues labelled `ready-for-agent` enter; a person applies the label. The first real run is #12 _Profiles_.
+- **Q112 Intake gate and first runs**: only issues labelled `ready-for-agent` enter; a person applies the label. The first real run is #11 _Invites_, once #10 _Sign-in_ (in review as #46) is merged. It is high tier, so the person reads its code. (#12 _Profiles_ was proposed first, but it depends on #11.)
 - **Q113 Issue format**: an issue template in `.github/ISSUE_TEMPLATE/` with Goal, Context, Acceptance criteria, Out of scope and How to verify, the sections the skeleton issues already use. Intake stops with `needs-info` when one is missing.
 - **Q116 Git**: one worktree per issue; branch `factory/<issue>-<slug>`; commits are labelled `structural:`, `behavioural:` or `harness:`. A pull request may tidy only the code it is about to change, in a structural commit before the behavioural one; anything else it notices is filed as an issue.
 
@@ -86,7 +86,7 @@ The Factory is the agent workflow that turns an issue into a merged pull request
   2. Sub-agent definitions with their hooks.
   3. The `/factory` orchestrator skill.
   4. A calibration replay (Q118).
-  5. The first real run, on #12.
+  5. The first real run, on #11.
 - **Q118 Calibration replay**: the Factory reruns #7 _tRPC end to end_ (medium tier, already merged) in a throwaway worktree, and its output is compared with what was merged, to see how many stops and findings it produces before it touches new work.
 - **Q119 This branch**: `software-factory` becomes the first pull request, documents only: the research, this record and the `CONTEXT.md` entries. It is larger than the 300-line convention because it holds no code; the pull request says so. It closes nothing.
 
