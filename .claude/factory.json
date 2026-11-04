@@ -15,8 +15,10 @@
     "**/*.test.ts",
     "**/*.test.tsx",
     "**/test-*.ts",
+    "**/test-*.tsx",
     "**/test-*.sh",
     "**/vitest.config.ts",
+    "**/vitest.setup.ts",
     "**/__snapshots__/**"
   ],
   "riskTiers": [

@@ -1,5 +1,6 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import { join, matchesGlob, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
 const repoRoot = resolve(import.meta.dirname, "../../..");
@@ -87,5 +88,22 @@ describe("the Factory's generic pieces", () => {
 
     expect(specifics.filter((value) => text.includes(value))).toEqual([]);
     expect(text).not.toMatch(/bardery/i);
+  });
+});
+
+describe("the Factory config", () => {
+  it("protects every tracked test, test helper and Vitest file", () => {
+    const { testFiles } = JSON.parse(
+      readFileSync(join(repoRoot, ".claude/factory.json"), "utf8"),
+    ) as { testFiles: string[] };
+    const tracked = spawnSync("git", ["ls-files"], { cwd: repoRoot, encoding: "utf8" }).stdout;
+    const testSupport = tracked
+      .split("\n")
+      .filter((file) => /(^|\/)(test-|vitest\.)|\.test\.|__snapshots__/.test(file));
+
+    expect(testSupport.length).toBeGreaterThan(0);
+    expect(
+      testSupport.filter((file) => !testFiles.some((glob) => matchesGlob(file, glob))),
+    ).toEqual([]);
   });
 });

@@ -3,5 +3,8 @@
   "name": "harness",
   "projectType": "library",
   "sourceRoot": "tools/harness/src",
-  "tags": ["scope:harness"]
+  "tags": ["scope:harness"],
+  // The harness tests read the Factory's agents, config and skills, which Nx would otherwise count
+  // towards no project, so a change to them alone would skip the tests.
+  "implicitDependencies": ["claude-config", "agent-skills"]
 }

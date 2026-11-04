@@ -1,0 +1,6 @@
+{
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  // No targets: it exists so that a change to the Factory's agents, hooks or config marks the harness
+  // project affected (tools/harness/project.json), whose tests check them.
+  "name": "claude-config"
+}

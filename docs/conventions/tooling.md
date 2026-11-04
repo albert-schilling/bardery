@@ -18,10 +18,12 @@ Node and pnpm versions are pinned in `.node-version` and `package.json`.
 
 The Factory's phase agents are in `.claude/agents/factory-*.md`; each ends with the result format in `.agents/skills/factory-result/`. They name nothing of Bardery's own: they read paths, labels, the validate command, test file globs and risk tiers from `.claude/factory.json`, and `factory-agents.test.ts` fails if a value from that file appears in them. JSON has no comments, so the reasons live here:
 
-- `testFiles` also covers test helpers (`test-*.ts`, `test-*.sh`) and Vitest configs, because changing them can make a failing test pass.
+- `testFiles` also covers test helpers (`test-*.ts`, `test-*.tsx`, `test-*.sh`) and Vitest configs and setup files, because changing them can make a failing test pass. `factory-agents.test.ts` fails if a tracked file named like one of them is missing from the globs.
 - `riskTiers`: for each changed path the first rule that matches sets its tier, so the high-tier paths come before the low-tier docs and tests; the change takes its paths' highest tier.
 
-`factory-implementer` runs the PreToolUse hook `.claude/hooks/protect-test-files.ts`, which denies edits to test files and tells the agent to stop and report. `.claude/hooks` links to `tools/harness/src/factory/`, because Nx counts a change under `.claude/` towards no project, so the hook's tests would never run as affected.
+`factory-implementer` runs the PreToolUse hook `.claude/hooks/protect-test-files.ts`, which denies edits to test files and tells the agent to stop and report. `.claude/hooks` links to `tools/harness/src/factory/`, so the hook is typechecked, linted and tested with the harness.
+
+Nx counts a file towards no project unless it lies under a project's folder, so a change only to `.claude/` or `.agents/` would skip the harness tests that check them. `.claude/project.json` and `.agents/project.json` make them projects without targets, and the harness depends on both (`implicitDependencies` in `tools/harness/project.json`).
 
 ## Gotchas
 

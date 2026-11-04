@@ -1,0 +1,6 @@
+{
+  "$schema": "../node_modules/nx/schemas/project-schema.json",
+  // No targets: it exists so that a change to a skill, such as the Factory's result format, marks the
+  // harness project affected (tools/harness/project.json), whose tests check it.
+  "name": "agent-skills"
+}

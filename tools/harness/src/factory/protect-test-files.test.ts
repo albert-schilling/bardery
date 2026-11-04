@@ -86,6 +86,41 @@ describe("the implementer's test-file hook", () => {
     expect(runHook("Bash", { command }).decision).toBeUndefined();
   });
 
+  describe("with tests on disk", () => {
+    beforeEach(() => {
+      mkdirSync(join(project, "src/fixtures"), { recursive: true });
+      mkdirSync(join(project, "dist"));
+      writeFileSync(join(project, "src/story.test.ts"), "");
+      writeFileSync(join(project, "src/fixtures/story.json"), "");
+    });
+
+    it.each([
+      "cd src/fixtures && rm story.json",
+      "cd src; cd fixtures; echo '{}' > story.json",
+      "rm -rf src",
+      "git restore -- src",
+      "git checkout .",
+      "mv src elsewhere",
+    ])("denies %j, which reaches a test file through a directory", (command) => {
+      const { decision } = runHook("Bash", { command });
+
+      expect(decision?.hookSpecificOutput.permissionDecision).toBe("deny");
+    });
+
+    it.each(["rm -rf dist", "cp build.ts src/", "cd src && rm story.ts", "cd dist && rm -r ."])(
+      "allows %j, which reaches no test file",
+      (command) => {
+        expect(runHook("Bash", { command }).decision).toBeUndefined();
+      },
+    );
+
+    it("denies a write after a cd it can't follow", () => {
+      const { decision } = runHook("Bash", { command: 'cd "$TMPDIR" && rm -rf src' });
+
+      expect(decision?.hookSpecificOutput.permissionDecisionReason).toContain("can't follow");
+    });
+  });
+
   it("blocks every call when the config can't be read, rather than letting edits through", () => {
     rmSync(join(project, ".claude/factory.json"));
 
