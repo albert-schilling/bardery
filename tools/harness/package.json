@@ -1,0 +1,14 @@
+{
+  "name": "@bardery/harness",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc",
+    "test": "vitest run",
+    "lint": "oxlint"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.3",
+    "vitest": "^5.0.3"
+  }
+}
