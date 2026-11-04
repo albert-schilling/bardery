@@ -12,7 +12,7 @@ Stop instead of assuming. When something is unclear (the issue, a convention, a 
 
 ## Configuration
 
-`.claude/factory.json` names this repository's specifics: `conventions` (the entry point to its conventions; read it and the topic files it links to that touch your work), `glossary`, `decisionRecords`, `issueTemplate`, `validate` (the command that runs what CI runs), `maxChangedLines` (the size of one pull request), `labels`, `testFiles` and `riskTiers`. Use these; don't assume another repository's layout.
+`.claude/factory.json` names this repository's specifics: `conventions` (the entry point to its conventions; read it and the topic files it links to that touch your work), `glossary`, `decisionRecords`, `issueTemplate`, `validate` (the command that runs what CI runs), `maxChangedLines` (the size of one pull request), `labels`, `testFiles` and `riskTiers`, plus a few keys only the orchestrator uses. Use these; don't assume another repository's layout.
 
 ## Your final message
 

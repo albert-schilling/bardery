@@ -3,8 +3,11 @@
   "glossary": "CONTEXT.md",
   "decisionRecords": ["docs/adr/", "docs/grilling/", "docs/prd/"],
   "issueTemplate": ".github/ISSUE_TEMPLATE/task.md",
+  "setup": "pnpm install",
   "validate": "pnpm validate",
   "maxChangedLines": 300,
+  "harnessLog": "docs/harness-log.md",
+  "pullRequestSkill": "pr",
   "labels": {
     "ready": "ready-for-agent",
     "needsInfo": "needs-info",

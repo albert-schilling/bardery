@@ -156,3 +156,6 @@ crash.log
 # React Router generated types and build output
 .react-router/
 apps/web/build/
+
+# Worktrees of Factory runs and other Claude Code sessions, so Nx and the linters skip their copies
+.claude/worktrees/
