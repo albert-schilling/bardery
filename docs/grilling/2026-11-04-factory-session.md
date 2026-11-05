@@ -11,13 +11,13 @@ The Factory is the agent workflow that turns an issue into a merged pull request
 ## Scope and home
 
 - **Q94 Iteration 1**: a supervised pipeline, started by a person for one issue at a time, plus the minimum harness it needs (Q109). No unattended runs and no scheduled groomers; they come in later iterations, once the stops and checks have proven themselves.
-- **Q95 Where it's built** (replaced by [Q123](2026-11-05-factory-extraction.md#home)): in Bardery (`.agents/skills/`, `.claude/agents/`).
+- **Q95 Where it's built**: _replaced by [Q123](2026-11-05-factory-extraction.md#home), which moved the Factory to the skills repository. It said:_ in Bardery (`.agents/skills/`, `.claude/agents/`).
 - **Q96 Relation to the installed skills**: our own orchestrator and phase skills. Pocock's discipline skills (`codebase-design`, `domain-modeling`, `grilling`, `code-review`, `pr`, `diagnosing-bugs`) are reused; one we need to change is forked into a Bardery-owned copy, never edited in place. His `implement` isn't used because it runs `tdd` in the implementing agent.
 - **Q97 Unit of work**: one issue, one pull request, about 300 changed lines, as today. A planner that finds an issue too big stops and proposes a split.
 - **Q99 Name**: "Factory". Skills and agents are named `factory-*`. [`CONTEXT.md`](../../CONTEXT.md) has an _Engineering_ section for its terms.
 - **Q120 Built for extraction**: generic pieces (orchestrator skill, phase agents, hooks) never name Bardery's paths, labels or conventions; they read them from one config file. Bardery's own knowledge lives outside them: `docs/conventions/`, `REVIEW.md`, risk-tier path rules, gotchas.
-- **Q121 Extraction** (replaced by [Q123](2026-11-05-factory-extraction.md#home)): the generic pieces are mirrored to [`albert-schilling/skills`](https://github.com/albert-schilling/skills) from the start, so the Factory can be shown now. It may be replaced after five runs; it counts as stable after five Factory runs in a row that change only Bardery's conventions and checks, not the generic pieces.
-- **Q122 Source of truth** (replaced by [Q123](2026-11-05-factory-extraction.md#home)): Bardery. The skills repository is a mirror that trails it, updated after each Factory pull request merges; its README says it is developed in Bardery and is experimental. Bardery doesn't install from it.
+- **Q121 Extraction**: _replaced by [Q123](2026-11-05-factory-extraction.md#home), which moved the Factory to the skills repository. It said:_ the generic pieces are mirrored to [`albert-schilling/skills`](https://github.com/albert-schilling/skills) from the start, so the Factory can be shown now. It may be replaced after five runs; it counts as stable after five Factory runs in a row that change only Bardery's conventions and checks, not the generic pieces.
+- **Q122 Source of truth**: _replaced by [Q123](2026-11-05-factory-extraction.md#home), which moved the Factory to the skills repository. It said:_ Bardery. The skills repository is a mirror that trails it, updated after each Factory pull request merges; its README says it is developed in Bardery and is experimental. Bardery doesn't install from it.
 
 ## How a run works
 

@@ -1,6 +1,6 @@
 # Grilling session 4: the Factory leaves Bardery (2026-11-05)
 
-Record of the session that moved the Factory's generic pieces out of Bardery: Q123–Q131. It revises [grilling session 3](2026-11-04-factory-session.md): Q123 replaces Q121 and Q122, and Q120 still holds. It replaces the plan of #58, which mirrored the pieces from Bardery.
+Record of the session that moved the Factory's generic pieces out of Bardery: Q123–Q132. It revises [grilling session 3](2026-11-04-factory-session.md): Q123 replaces Q121 and Q122, and Q120 still holds. It replaces the plan of #58, which mirrored the pieces from Bardery.
 
 Answers are final.
 
