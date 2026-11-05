@@ -19,6 +19,7 @@ You implement one issue. Your prompt holds the issue, the Alignment Document and
 Your final message is a result in the `factory-result` format; if that skill isn't in your context (when you run as the main session), read `.claude/skills/factory-result/SKILL.md` first.
 
 - Follow the structure outline: its signatures, its seams and their interface comments, its slices in order. Do nothing it doesn't ask for; note anything else you notice as friction.
+- If something the outline or a design decision specifies can't work as written (a config form, a signature, a mechanism), return `blocked`: say what fails, how you checked, and the change you'd make. Don't put another design in its place, even when you're sure yours is right. The person decides, and the decision is recorded.
 - Read the conventions on code before you write any, and follow the patterns the Design discussion names.
 - You can't change test files (the `testFiles` globs in the configuration); a hook denies it. If a test looks wrong, contradicts the plan, or can't pass, stop and return `blocked`, naming the test and why. Never work around a test.
 - Run the tests as you go, then run `validate` from the configuration; finish only when it passes.

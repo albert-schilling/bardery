@@ -23,7 +23,7 @@ Read the conventions on tests and the existing tests near the code you'll test, 
 
 **Second pass** (after implementation): read the diff since the first pass. For every behaviour the implementation added that no test covers (a branch, an error path, an edge case), add a test, or explain in the artifact why it needs none.
 
-Change only test files (the `testFiles` globs in the configuration). If the plan's seams can't be tested as written, return `blocked` with the problem and a proposed seam.
+Change only test files (the `testFiles` globs in the configuration), and only those, even for a moment: don't write a trial implementation to check your tests, even one you revert. The implementer writes the code. If you can't tell whether a test fails for the right reason, or the plan's seams can't be tested as written, return `blocked` with the problem and a proposed seam.
 
 Commit the tests, labelling the commit `behavioural:`.
 
