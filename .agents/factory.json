@@ -1,4 +1,6 @@
 {
+  "$schema": "skills/factory/factory.schema.json",
+  "codingAgent": "claude-code",
   "conventions": "AGENTS.md",
   "glossary": "CONTEXT.md",
   "decisionRecords": ["docs/adr/", "docs/grilling/", "docs/prd/"],
@@ -7,7 +9,6 @@
   "validate": "pnpm validate",
   "maxChangedLines": 300,
   "harnessLog": "docs/harness-log.md",
-  "pullRequestSkill": "pr",
   "labels": {
     "ready": "ready-for-agent",
     "needsInfo": "needs-info",
@@ -45,7 +46,7 @@
         "apps/**/*moderation*",
         "apps/**/*moderation*/**",
         ".claude/**",
-        ".agents/skills/factory*/**",
+        ".agents/**",
         "tools/harness/**"
       ]
     },

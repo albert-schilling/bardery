@@ -7,11 +7,20 @@ argument-hint: "<issue number>"
 
 # The Factory
 
-You run issue `$ARGUMENTS` through the Factory's phases in the main session. The phase agents (`factory-*`) do the work; you dispatch them one after another, check what each reports, keep the state in the issue and the pull request, and put every question to the person. You never merge, and you never answer a question for the person.
+You run issue `$ARGUMENTS` through the Factory's phases in the main session. The phase agents (`factory-*`) do the work; you start them one after another, check what each reports, keep the state in the issue and the pull request, and put every question to the person. You never merge, and you never answer a question for the person.
 
 ## Configuration
 
-Read `.claude/factory.json` first. Everything about this repository comes from it; this skill writes its keys as `config.<key>`. Read `config.conventions` and the topic files it links to that touch a phase before you act on that phase.
+Read `.agents/factory.json` first. Everything about this repository comes from it; this skill writes its keys as `config.<key>`. Read `config.conventions` and the topic files it links to that touch a phase before you act on that phase. If the file is missing, the Factory isn't set up here: tell the person to run the `factory-setup` skill, and stop.
+
+## Your coding agent
+
+This skill names actions, not tools. Read `adapters/<config.codingAgent>/README.md` (in this skill's folder, for example [`adapters/claude-code/README.md`](adapters/claude-code/README.md)) before anything else: it says which of your tools does each action, and where the phase agents and hooks live.
+
+- **Start an agent**: run a `factory-*` phase agent with a prompt, wait for it, and get its final message.
+- **Continue an agent**: send a follow-up to an agent you started, so it keeps its context.
+- **Ask the person**: put questions to the person and wait for the answers.
+- **Enter a worktree** and **leave the worktree**, keeping it on disk. The adapter names the folder worktrees go in.
 
 ## State
 
@@ -35,9 +44,9 @@ A phase is finished only when every artifact its result names exists. After each
 
 When a check fails, send the phase back to its agent naming the failed check. When it fails a second time, it is a Stop.
 
-## Dispatching a phase
+## Starting a phase
 
-Start the phase's agent with the Agent tool, in the foreground. Its prompt holds what the agent's definition says it receives, and nothing more. Its last message is a `factory-result`:
+Start the phase's agent. Its prompt holds what the agent's definition says it receives, and nothing more. Its last message is a `factory-result`:
 
 - `## Result: done`: run the checks, record it in the run log, move on.
 - `## Result: blocked`: record it in the run log; it is a Stop. Follow [`stops.md`](stops.md), then resume the same phase.
@@ -62,15 +71,15 @@ When it passes, remove `config.labels.needsInfo` if present.
 
 ### 2. Worktree
 
-Branch `factory/<issue>-<slug>`, the slug three or four words of the issue title in kebab case. Create the worktree from the default branch on origin with `git worktree add .claude/worktrees/factory-<issue>-<slug> -b <branch> origin/<default branch>` (on resume, reuse it, or recreate it from the pushed branch), enter it with the EnterWorktree tool's `path`, and run `config.setup` there. Every later phase runs in it. Post the run log.
+Branch `factory/<issue>-<slug>`, the slug three or four words of the issue title in kebab case. Create the worktree in the adapter's worktree folder, from the default branch on origin: `git worktree add <worktree folder>/factory-<issue>-<slug> -b <branch> origin/<default branch>` (on resume, reuse it, or recreate it from the pushed branch), enter it, and run `config.setup` there. Every later phase runs in it. Post the run log.
 
 ### 3. Research
 
-From the issue, write numbered questions about the code as it is today: what exists, where, how it is used, what patterns nearby code follows. Ask for facts only. Dispatch `factory-researcher` with the questions alone: no issue, title, goal, acceptance criteria or plan. Post the Research summary.
+From the issue, write numbered questions about the code as it is today: what exists, where, how it is used, what patterns nearby code follows. Ask for facts only. Start `factory-researcher` with the questions alone: no issue, title, goal, acceptance criteria or plan. Post the Research summary.
 
 ### 4. Alignment Document
 
-Dispatch `factory-planner` with the issue and the Research summary. Post its artifact as the Alignment Document, `Status: awaiting review`.
+Start `factory-planner` with the issue and the Research summary. Post its artifact as the Alignment Document, `Status: awaiting review`.
 
 A `blocked` result proposing a split ends the run once the person answers: on approval, file the split issues from `config.issueTemplate`, without `config.labels.ready` (only a person applies it), and link them from the issue.
 
@@ -80,15 +89,15 @@ Stop here, before any test or code is written. Link the comment and ask the pers
 
 ### 6. Tests, first pass
 
-Dispatch `factory-test-writer` with the issue, the Alignment Document and "first pass". Check, in addition, that its commit changes only files matching `config.testFiles`.
+Start `factory-test-writer` with the issue, the Alignment Document and "first pass". Check, in addition, that its commit changes only files matching `config.testFiles`.
 
 ### 7. Implementation
 
-Dispatch `factory-implementer` with the issue, the Alignment Document and the test commit. Check, in addition, that no file matching `config.testFiles` changed since the test baseline: the test commit, or a correction a Stop approved ([`stops.md`](stops.md)). Keep the baseline in the run log.
+Start `factory-implementer` with the issue, the Alignment Document and the test commit. Check, in addition, that no file matching `config.testFiles` changed since the test baseline: the test commit, or a correction a Stop approved ([`stops.md`](stops.md)). Keep the baseline in the run log.
 
 ### 8. Tests, second pass
 
-Dispatch `factory-test-writer` with the issue, the Alignment Document, "second pass" and the last implementation commit.
+Start `factory-test-writer` with the issue, the Alignment Document, "second pass" and the last implementation commit.
 
 ### 9. Review
 
@@ -98,7 +107,7 @@ Work out the Risk Tier first; it decides the security review below. A round runs
 - **Findings in untouched code**: search the open issues for a duplicate; file the rest from `config.issueTemplate`, labelled `config.labels.preExisting`, and link them in the pull request.
 - A round with no fix commits ends the review. After three rounds, stop and ask the person whether to run another round, accept the open findings, or take over.
 
-Then work out the Risk Tier again, since fixes may have added paths. For High, run the `security-review` skill. It diffs against `origin/HEAD`, which a fresh clone may lack; run `git remote set-head origin --auto` first. Send its findings in the change's scope to `factory-implementer` as a fix, and list them in the pull request with their answers.
+Then work out the Risk Tier again, since fixes may have added paths. For High, start `factory-reviewer-security` with the issue, the Alignment Document and the base. Its fixes are commits like the other reviewers'; list its findings in the pull request with their answers, and file those in untouched code as above.
 
 ### 10. Verify
 
@@ -108,31 +117,25 @@ Run `config.validate` in the worktree. On failure, send the output to `factory-i
 
 Size: count the changed lines from the base; above `config.maxChangedLines`, say so in the pull request and why it wasn't split.
 
-Risk Tier: work it out once more. If it rose to High after the security review was skipped, run it now, as in Review.
+Risk Tier: work it out once more. If it rose to High after the security review was skipped, run it now, as in Review; when it commits fixes, run Verify again, so the pull request and its evidence describe the final commits.
 
-Push the branch and open the pull request against the default branch, titled like the issue. Write its body with the `config.pullRequestSkill` skill: its evidence is the tests with their failure before implementation and the final `config.validate` summary; its merge danger is the door (one-way or two-way) and the blast radius. Add:
-
-- `Closes #<issue>` as its first line.
-- **Risk Tier**, and why. For High: a person reads the code before merging.
-- **Review**: each finding and its fix commit or answer, rounds run, issues filed for untouched code.
-- **Stops**: each question and the answer, with where it was recorded.
-
-Leave merging to a person: don't merge, approve or enable auto-merge.
+Push the branch and open the pull request against the default branch, titled like the issue. Write its body with the `factory-pull-request` skill. Leave merging to a person: don't merge, approve or enable auto-merge.
 
 ### 12. Retro
 
 Review the run: the run log, every result, the Stops, the review findings. Propose to the person, as three numbered lists:
 
 1. **Harness log entries** for `config.harnessLog`'s entries table: what an agent got wrong or needed to be told, and the harness change that prevents it.
-2. **Harness changes**: conventions, gotchas and checks for patterns the run used that aren't described yet, or that cost a Stop or a review finding. Prefer a check over a written rule.
+2. **Harness changes**: conventions, gotchas and checks for patterns the run used that aren't described yet, or that cost a Stop or a review finding. Prefer a check over a written rule. Say for each whether it belongs to this repository (its config, conventions or checks) or to the Factory itself (this skill, the agents, the hooks).
 3. **Friction**: the friction from every result, deduplicated, each as a would-be issue.
 
 Act only on what the person accepts:
 
-- Small harness changes and the accepted log entries: `harness:` commits in this pull request.
-- Bigger harness changes: issues from `config.issueTemplate`.
+- Small harness changes to this repository and the accepted log entries: `harness:` commits in this pull request.
+- Bigger harness changes to this repository: issues from `config.issueTemplate`.
+- Changes to the Factory itself: never edit its installed files, which the next update replaces. Open an issue in the repository the Factory was installed from (`skills-lock.json` names it), with what went wrong and the change you propose.
 - Friction: search the issues for each first (open and closed); file the rest labelled `config.labels.friction`.
 
 Fill in the run's row in the Factory runs table of `config.harnessLog`, following the column definitions above it; ask the person for their review minutes. Commit it as `harness:`.
 
-When the retro changed more than the harness log, the reviewed change is no longer what goes out: run one more Review round on those commits, work out the Risk Tier again (with the security review if it is now High), and run `config.validate`. Push, and update the pull request's Risk Tier, Review and Evidence to the final commits. Update the run log to `retro done`, leave the worktree with ExitWorktree (`keep`), and end with the pull request's link and what the person does next.
+When the retro changed more than the harness log, the reviewed change is no longer what goes out: run one more Review round on those commits, work out the Risk Tier again (with the security review if it is now High), and run `config.validate`. Push, and update the pull request's Risk Tier, Review and Evidence to the final commits. Update the run log to `retro done`, leave the worktree, and end with the pull request's link and what the person does next.
