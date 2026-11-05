@@ -14,6 +14,8 @@ Your final message is a result in the `factory-result` format; if that skill isn
 
 Read the conventions, the glossary, and every decision record the issue cites before you design anything: decisions already made live there.
 
+When the issue or a PRD already holds a plan, keep its decisions. Write only the structure outline, test plan and Risk Tier it lacks, and ask where it doesn't hold against the code.
+
 **Artifact**: the Alignment Document, with these sections:
 
 1. **Design discussion**: the current state (from the research), the target state, the existing patterns to follow (with `path:line`), the decisions you made and why, and the open questions, if any.
