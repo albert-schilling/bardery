@@ -8,7 +8,7 @@ Read the relevant source before you design anything; decisions are already made 
 
 - [`CONTEXT.md`](CONTEXT.md): the glossary. Use its terms in code, tests, commits and PRs, and avoid the words it lists under _Avoid_.
 - [`docs/adr/`](docs/adr/): architecture decisions.
-- [`docs/grilling/`](docs/grilling/): the product (Q1–Q33), technical (Q34–Q93) and Factory (Q94–Q119) decisions, numbered. Issues cite them as Q numbers.
+- [`docs/grilling/`](docs/grilling/): the product (Q1–Q33), technical (Q34–Q93) and Factory (Q94–Q132) decisions, numbered. Issues cite them as Q numbers.
 - [`docs/prd/walking-skeleton.md`](docs/prd/walking-skeleton.md): the current deliverable and the order of its slices.
 - [`docs/design/`](docs/design/): the UI prototype.
 - [`infra/README.md`](infra/README.md): Terraform layout and one-time setup.
