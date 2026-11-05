@@ -98,7 +98,7 @@ Work out the Risk Tier first; it decides the security review below. A round runs
 - **Findings in untouched code**: search the open issues for a duplicate; file the rest from `config.issueTemplate`, labelled `config.labels.preExisting`, and link them in the pull request.
 - A round with no fix commits ends the review. After three rounds, stop and ask the person whether to run another round, accept the open findings, or take over.
 
-Then work out the Risk Tier again, since fixes may have added paths. For High, run the `security-review` skill. Send its findings in the change's scope to `factory-implementer` as a fix, and list them in the pull request with their answers.
+Then work out the Risk Tier again, since fixes may have added paths. For High, run the `security-review` skill. It diffs against `origin/HEAD`, which a fresh clone may lack; run `git remote set-head origin --auto` first. Send its findings in the change's scope to `factory-implementer` as a fix, and list them in the pull request with their answers.
 
 ### 10. Verify
 

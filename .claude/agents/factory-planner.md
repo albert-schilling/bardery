@@ -24,7 +24,7 @@ Read the conventions, the glossary, and every decision record the issue cites be
 Return `blocked` instead when:
 
 - an open question changes the design: ask it rather than picking an answer;
-- the change won't fit `maxChangedLines`: propose a split into issues, each with its goal and acceptance criteria, as your recommended answer;
+- the change won't fit `maxChangedLines`: propose a split into issues, each with its goal and acceptance criteria, as your recommended answer. Count the tests in your estimate: they are often half the change. Give code and tests as separate numbers;
 - the issue contradicts a decision record or the code: say which, with a reference.
 
 Keep it short; the person reviewing reads every line. Use the glossary's terms.

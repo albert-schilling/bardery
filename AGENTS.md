@@ -18,6 +18,8 @@ Read the relevant source before you design anything; decisions are already made 
 `pnpm validate` runs what CI runs. A Stop hook runs it at the end of every Claude Code turn and keeps the turn going while it fails.
 
 - [`docs/conventions/tooling.md`](docs/conventions/tooling.md): commands, and tool behaviour that has surprised us. Read it before you run, configure or debug a tool.
-- [`docs/conventions/code.md`](docs/conventions/code.md): project layout, imports, config files and comments. Read it before you write code or config.
+- [`docs/conventions/code.md`](docs/conventions/code.md): project layout, imports, config files, comments and TypeScript types. Read it before you write code or config.
+- [`docs/conventions/deployment.md`](docs/conventions/deployment.md): build-time and per-environment values. Read it before you change how an app is built, configured or deployed.
+- [`docs/conventions/accessibility.md`](docs/conventions/accessibility.md): what a client must do for assistive technology. Read it before you change what a client shows.
 - [`docs/conventions/pull-requests.md`](docs/conventions/pull-requests.md): size, tests, screenshots, workflow files and the harness log. Read it before you commit, push or open a PR.
 - [`docs/conventions/issues-and-records.md`](docs/conventions/issues-and-records.md): the issue template, labels, and how decision records name tools. Read it before you write an issue, ADR, grilling record or PRD.
