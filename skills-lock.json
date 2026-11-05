@@ -41,7 +41,7 @@
       "source": "albert-schilling/skills",
       "sourceType": "github",
       "skillPath": "skills/factory/SKILL.md",
-      "computedHash": "973d66c4497c48e712538f5b5be2b5244666e6532259a669f611cabddb9c6f50"
+      "computedHash": "6dc800fa63761721e075783c30d4c6efeefc189c600a8cba7e54d0718235290d"
     },
     "factory-pull-request": {
       "source": "albert-schilling/skills",
