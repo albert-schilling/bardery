@@ -1,0 +1,10 @@
+{
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "name": "harness",
+  "projectType": "library",
+  "sourceRoot": "tools/harness/src",
+  "tags": ["scope:harness"],
+  // The harness test reads the Factory's config, which Nx would otherwise count towards no project,
+  // so a change to it alone would skip the test.
+  "implicitDependencies": ["agents-config"]
+}

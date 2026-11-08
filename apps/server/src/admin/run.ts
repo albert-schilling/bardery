@@ -20,7 +20,7 @@ export async function runAdmin(args: string[], context: AdminContext): Promise<v
       subject: "Bardery test email",
       text: "This is a test email from Bardery's admin CLI.",
     });
-    context.log(`Test email sent to ${address}`);
+    context.log(`Test email accepted for ${address}`);
     return;
   }
   throw new UsageError(usage);

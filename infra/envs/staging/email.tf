@@ -28,3 +28,24 @@ locals {
 # Service to send through it with no connection string. It isn't assigned here: CI's Contributor role
 # can't create role assignments, and widening it would let a compromised workflow grant itself anything
 # on staging. It's assigned once by hand (infra/README.md, Staging email).
+
+# The send and delivery-status logs of the Communication Service, which Azure Monitor's email views and
+# queries read; without them nothing records what happened to a message after Azure accepted it. The
+# tables are ACSEmailSendMailOperational and ACSEmailStatusUpdateOperational.
+resource "azurerm_monitor_diagnostic_setting" "communication" {
+  name                       = "email-logs"
+  target_resource_id         = azurerm_communication_service.staging.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.staging.id
+
+  # Resource-specific tables (ACSEmail…). If a plan keeps showing this argument changing, remove it: for
+  # some resource types Azure does not store it, and the provider then plans the change on every run.
+  log_analytics_destination_type = "Dedicated"
+
+  enabled_log {
+    category = "EmailSendMailOperational"
+  }
+
+  enabled_log {
+    category = "EmailStatusUpdateOperational"
+  }
+}
