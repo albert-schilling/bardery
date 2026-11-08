@@ -34,13 +34,12 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - run: pnpm format:check
-      - run: pnpm lint
-
+      # Sets the base and head that `nx affected` in `pnpm validate` compares.
       - uses: nrwl/nx-set-shas@afb73a62d26e41464e9254689e1fd6122ee683c1 # v5.0.1
-      # The server's tests start Postgres in Docker (Testcontainers); check-migrations fails when the
-      # Drizzle schema has changes that no checked-in migration covers.
-      - run: pnpm nx affected -t lint typecheck test build test-image check-migrations
+      # The same command developers and the Claude Code Stop hook run, so CI and local checks can't
+      # drift. The server's tests start Postgres in Docker (Testcontainers); check-migrations fails
+      # when the Drizzle schema has changes that no checked-in migration covers.
+      - run: pnpm validate
 
   terraform-checks:
     runs-on: ubuntu-latest

@@ -1,0 +1,36 @@
+# Tooling
+
+## Commands
+
+Node and pnpm versions are pinned in `.node-version` and `package.json`.
+
+- `pnpm install`: also installs the lefthook git hooks, which format and lint staged files.
+- `pnpm validate`: everything CI's `checks` job runs: `format:check`, `lint`, and the `lint`, `typecheck`, `test`, `build`, `test-image` and `check-migrations` targets of the projects affected since `main`. The server's tests and the image tests need Docker.
+- `pnpm format` / `pnpm format:check`: oxfmt.
+- `pnpm lint`: oxlint, with type-aware rules.
+- `pnpm nx show projects`, `pnpm nx run-many -t <target>`: project tasks.
+
+## The Factory
+
+The Factory is installed from [`albert-schilling/skills`](https://github.com/albert-schilling/skills) with `npx skills add` and `/factory-setup`, like in any project. Its skills (`factory`, `factory-result`, `factory-pull-request`, `factory-setup`) are in `.agents/skills/` and listed in `skills-lock.json`; the agents in `.claude/agents/factory-*.md` and the Stop hook in `.claude/settings.json` are what `/factory-setup` copies from the Claude Code adapter. Don't change them here: change them in the skills repository, then run `npx skills update` and `/factory-setup` again.
+
+A person starts a run with `/factory <issue>`. What stays in Bardery is its own configuration, in `.agents/factory.json` (JSON has no comments, so the reasons live here):
+
+- `setup` runs in a run's fresh worktree, which has no `node_modules`.
+- `validate` is `pnpm validate`. The Stop hook runs it when a Claude Code turn ends and keeps the turn going while it fails, so its timeout is 20 minutes: a change that affects every project builds and tests the images.
+- `testFiles` also covers test helpers (`test-*.ts`, `test-*.tsx`, `test-*.sh`) and Vitest configs and setup files, because changing them can make a failing test pass. The harness's `factory-config.test.ts` fails if a tracked file named like one of them is missing from the globs.
+- `riskTiers`: for each changed path the first rule that matches sets its tier, so the high-tier paths come before the low-tier docs and tests; the change takes its paths' highest tier.
+
+Nx counts a file towards no project unless it lies under a project's folder, so a change only to `.agents/factory.json` would skip the harness test that checks it. `.agents/project.json` makes `.agents/` a project without targets, and the harness depends on it (`implicitDependencies` in `tools/harness/project.json`).
+
+## Gotchas
+
+- oxfmt formats SCSS and CSS (checked with oxfmt 0.70), so it owns formatting of styles; Stylelint only lints them.
+- A nested `.oxlintrc.json` replaces the root one instead of merging with it. Even with `extends` it loses the root's path-based `overrides`, so per-folder rules go in the root config with paths from the repo root.
+- A package script whose name is an Nx command (`migrate`, `release`, `graph`, …) can't be run as `pnpm nx <name> <project>`: Nx runs its own command. Name targets so they don't shadow one.
+- oxlint's regexes (e.g. `no-restricted-imports` `regex` patterns) have no lookahead; a pattern with `(?!…)` silently matches nothing. Use `group` patterns with `!` negation instead.
+- In a Claude Code cloud session, an image build can't reach npm: the agent proxy listens on the host's `127.0.0.1`, and its CA isn't trusted inside the build (`SELF_SIGNED_CERT_IN_CHAIN`), so `test-image` fails there. Docker's daemon may not be running either (start `dockerd`). To run an image's checks anyway, work in a scratch folder outside the repository:
+  1. Copy the image's Dockerfile and its `Dockerfile.dockerignore` there, side by side; without the ignore file, host `node_modules` enter the build. In the copy, add `COPY --from=ca ca-bundle.crt /ca.crt` and `ENV NODE_EXTRA_CA_CERTS=/ca.crt npm_config_cafile=/ca.crt` after the build stage's `WORKDIR`.
+  2. From the repository root, run `docker build --network host --build-arg HTTPS_PROXY=$HTTPS_PROXY --build-context ca=/root/.ccr --file <copy> --tag <the tag test-image.sh uses> …`.
+  3. Copy `test-image.sh`, delete its `docker build` line and set its repository root to an absolute path, then run the copy. The original rebuilds without the CA. The image tests are the only check that catches a broken bundle (#36's server image crashed at startup in CI).
+- A git worktree inside the repository (a Factory run's, under `.claude/worktrees/`) holds a second copy of every `project.json`, so Nx refuses to start and oxfmt checks every file twice. `.gitignore` excludes `.claude/worktrees/`, which all three tools respect.
