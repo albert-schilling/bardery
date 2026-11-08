@@ -60,7 +60,8 @@ export function SignInForm() {
       <h1 className="sign-in-form__title">Sign in</h1>
       {codeSent ? (
         <>
-          <p className="sign-in-form__hint">
+          {/* A live region: a resend changes this text, and screen readers should announce it. */}
+          <p className="sign-in-form__hint" role="status">
             We emailed {resent ? "a new code" : "a code"} to {email}.
           </p>
           <label className="sign-in-form__field">

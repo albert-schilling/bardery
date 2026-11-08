@@ -82,9 +82,10 @@ describe("SignInForm", () => {
 
     fireEvent.click(screen.getByRole("button", { name: "Send a new code" }));
 
-    expect(
-      await screen.findByText("We emailed a new code to parent@example.com."),
-    ).toBeInTheDocument();
+    expect(await screen.findByText("We emailed a new code to parent@example.com.")).toHaveAttribute(
+      "role",
+      "status",
+    );
     expect(sendCode).toHaveBeenCalledTimes(2);
     expect(sendCode).toHaveBeenLastCalledWith("parent@example.com");
     expect(screen.getByLabelText("Code")).toHaveValue("");
