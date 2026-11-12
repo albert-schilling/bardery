@@ -15,21 +15,24 @@ resource "azurerm_dns_zone" "bardery" {
   }
 }
 
-# united-domains email forwarding (Q93). Replace with mailbox.org's records when switching.
+# united-domains email forwarding (Q93). Replace with mailbox.org's records when switching; the apex
+# and mail.bardery.app below use the same servers.
+locals {
+  mail_exchangers = { 10 = "mx00.udag.de", 20 = "mx01.udag.de" }
+}
+
 resource "azurerm_dns_mx_record" "apex" {
   name                = "@"
   zone_name           = azurerm_dns_zone.bardery.name
   resource_group_name = azurerm_resource_group.shared.name
   ttl                 = 3600
 
-  record {
-    preference = 10
-    exchange   = "mx00.udag.de"
-  }
-
-  record {
-    preference = 20
-    exchange   = "mx01.udag.de"
+  dynamic "record" {
+    for_each = local.mail_exchangers
+    content {
+      preference = record.key
+      exchange   = record.value
+    }
   }
 }
 
@@ -110,6 +113,24 @@ resource "azurerm_dns_txt_record" "mail" {
 
   record {
     value = local.mail_verification.spf[0].value
+  }
+}
+
+# The sending domain must be able to receive mail too: bounces go back to it, and mail providers refuse
+# or defer mail from a domain without an MX record. Without one, the first staging sign-in emails went
+# undelivered: GMX refused them with a 550, and Posteo kept deferring them.
+resource "azurerm_dns_mx_record" "mail" {
+  name                = "mail"
+  zone_name           = azurerm_dns_zone.bardery.name
+  resource_group_name = azurerm_resource_group.shared.name
+  ttl                 = 3600
+
+  dynamic "record" {
+    for_each = local.mail_exchangers
+    content {
+      preference = record.key
+      exchange   = record.value
+    }
   }
 }
 
