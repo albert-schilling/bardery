@@ -14,7 +14,8 @@ database=$(docker run --detach --network "$network" --network-alias postgres --e
   "$(docker compose --file "$root/docker-compose.yml" config --images | grep pgvector)")
 # A deployed server refuses to start without these; nothing connects to the endpoint in this test.
 container=$(docker run --detach --publish 127.0.0.1::3000 --env AUTH_SECRET="$(printf 'x%.0s' {1..32})" \
-  --env API_URL=https://api.bardery.example --env AZURE_COMMUNICATION_ENDPOINT=https://bardery.example "$image")
+  --env API_URL=https://api.bardery.example --env COOKIE_DOMAIN=bardery.example \
+  --env AZURE_COMMUNICATION_ENDPOINT=https://bardery.example "$image")
 trap 'docker rm --force "$container" "$database" > /dev/null; docker network rm "$network" > /dev/null' EXIT
 url="http://$(docker port "$container" 3000)"
 

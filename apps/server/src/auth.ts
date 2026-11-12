@@ -20,6 +20,13 @@ export function createAuth(deps: { config: Config; db: Database; signIn: SignInS
   if (config.NODE_ENV === "production" && !config.API_URL.startsWith("https://")) {
     throw new Error("API_URL is not https; a deployed server's session cookie must be Secure.");
   }
+  // Without it, the cookie falls back to the api's host and the generic name `bardery`, which
+  // another environment's cookie on a parent domain could collide with.
+  if (config.NODE_ENV === "production" && config.COOKIE_DOMAIN === undefined) {
+    throw new Error(
+      "COOKIE_DOMAIN is not set; a deployed server's session cookie must be scoped to its environment's domain.",
+    );
+  }
 
   return betterAuth({
     baseURL: config.API_URL,

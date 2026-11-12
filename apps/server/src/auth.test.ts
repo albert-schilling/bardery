@@ -17,10 +17,11 @@ const deployed = {
   NODE_ENV: "production",
   API_URL: "https://api.staging.bardery.app",
   AUTH_SECRET: "a".repeat(32),
+  COOKIE_DOMAIN: "staging.bardery.app",
 };
 
 describe("createAuth", () => {
-  it("builds for a deployed server with a secret and an https address", () => {
+  it("builds for a deployed server with a secret, an https address and a cookie domain", () => {
     expect(() => createAuth({ config: loadConfig(deployed), db, signIn })).not.toThrow();
   });
 
@@ -32,5 +33,10 @@ describe("createAuth", () => {
   it("refuses a deployed server whose address isn't https, as its cookie wouldn't be Secure", () => {
     const config = loadConfig({ ...deployed, API_URL: "http://api.staging.bardery.app" });
     expect(() => createAuth({ config, db, signIn })).toThrow(/API_URL/);
+  });
+
+  it("refuses a deployed server without a cookie domain, naming the variable", () => {
+    const config = loadConfig({ ...deployed, COOKIE_DOMAIN: undefined });
+    expect(() => createAuth({ config, db, signIn })).toThrow(/COOKIE_DOMAIN/);
   });
 });

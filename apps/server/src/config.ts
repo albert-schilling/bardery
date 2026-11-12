@@ -42,7 +42,7 @@ const configSchema = z.object({
   // server refuses to start without one.
   AUTH_SECRET: z.string().min(32).optional(),
   // The parent domain of the web app and the api, which share the session cookie through it. Unset
-  // locally, where both run on localhost.
+  // locally, where both run on localhost; a deployed server refuses to start without it.
   COOKIE_DOMAIN: z.string().min(1).optional(),
   // Who may create an Account, as emails, comma-separated, until invite codes replace this list.
   SIGN_UP_ALLOWLIST: list("").transform((emails) => emails.map((email) => email.toLowerCase())),
