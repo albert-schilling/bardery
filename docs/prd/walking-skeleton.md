@@ -4,7 +4,7 @@ The first deliverable of Bardery (Q91): the thinnest slice of the product that r
 
 This document says **what** the skeleton contains and in which order it's built. The **how** is already decided; link to it instead of repeating it:
 
-- [`CONTEXT.md`](../../CONTEXT.md): the glossary. Use its terms in code, issues and PRs.
+- [`GLOSSARY.md`](../../GLOSSARY.md): the glossary. Use its terms in code, issues and PRs.
 - [Session 2 record](../grilling/2026-09-24-technical-session.md): Q34–Q93, the technical design.
 - [`docs/adr/`](../adr/): ADRs 0001–0005.
 - [`infra/README.md`](../../infra/README.md): Terraform layout and the one-time setup already done.

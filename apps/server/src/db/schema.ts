@@ -2,7 +2,7 @@
 // Application tables arrive with the features that need them.
 import { bigint, boolean, index, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 
-// Better Auth's tables, under the names it gives them (CONTEXT.md calls a `user` an Account). Only
+// Better Auth's tables, under the names it gives them (GLOSSARY.md calls a `user` an Account). Only
 // Better Auth and the repositories touch them. Better Auth makes the IDs.
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
