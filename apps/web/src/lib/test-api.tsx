@@ -4,10 +4,24 @@ import type { ReactNode } from "react";
 
 import type { AppRouter } from "@bardery/server/router";
 
+import { type Auth, AuthProvider } from "~/lib/auth";
 import { TRPCProvider } from "~/lib/trpc";
 
-/** Wraps a component in the tRPC providers, with a client whose procedures answer from `answers`. */
-export function withMockApi(answers: Record<string, () => unknown>) {
+/** An Auth whose calls all succeed; a test replaces the ones it checks. */
+export function fakeAuth(overrides: Partial<Auth> = {}): Auth {
+  return {
+    sendCode: async () => {},
+    signIn: async () => {},
+    signOut: async () => {},
+    ...overrides,
+  };
+}
+
+/**
+ * Wraps a component in the tRPC and auth providers, with a client whose procedures answer from
+ * `answers`; an answer that throws `UnauthorizedError` fails as for an anonymous call.
+ */
+export function withMockApi(answers: Record<string, () => unknown>, auth: Auth = fakeAuth()) {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   // A real client over a fake network: every call answers from `answers` as the server would.
   const client = createTRPCClient<AppRouter>({
@@ -26,7 +40,15 @@ export function withMockApi(answers: Record<string, () => unknown>) {
           }
           try {
             return Response.json({ result: { data: await answer() } });
-          } catch {
+          } catch (error) {
+            if (error instanceof UnauthorizedError) {
+              return Response.json(
+                {
+                  error: { message: "UNAUTHORIZED", code: -32001, data: { code: "UNAUTHORIZED" } },
+                },
+                { status: 401 },
+              );
+            }
             return Response.json(
               { error: { message: "failed", code: -32603, data: {} } },
               { status: 500 },
@@ -40,9 +62,12 @@ export function withMockApi(answers: Record<string, () => unknown>) {
     return (
       <QueryClientProvider client={queryClient}>
         <TRPCProvider trpcClient={client} queryClient={queryClient}>
-          {children}
+          <AuthProvider auth={auth}>{children}</AuthProvider>
         </TRPCProvider>
       </QueryClientProvider>
     );
   };
 }
+
+/** Thrown by an answer to make the procedure fail as it does for an anonymous call. */
+export class UnauthorizedError extends Error {}

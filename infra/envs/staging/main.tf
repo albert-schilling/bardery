@@ -114,10 +114,20 @@ resource "azurerm_container_app" "api" {
   revision_mode                = "Single"
   workload_profile_name        = "Consumption"
 
-  # Signs in to the database (database.tf).
+  # Signs in to the database (database.tf) and reads the Key Vault (sign-in.tf).
   identity {
     type         = "UserAssigned"
     identity_ids = [azurerm_user_assigned_identity.api.id]
+  }
+
+  # References to the Key Vault (sign-in.tf), read with the identity above.
+  dynamic "secret" {
+    for_each = local.api_secrets
+    content {
+      name                = secret.key
+      key_vault_secret_id = "${azurerm_key_vault.staging.vault_uri}secrets/${secret.key}"
+      identity            = azurerm_user_assigned_identity.api.id
+    }
   }
 
   template {
@@ -146,6 +156,25 @@ resource "azurerm_container_app" "api" {
       env {
         name  = "AZURE_COMMUNICATION_ENDPOINT"
         value = local.communication_endpoint
+      }
+
+      # Sign-in. The session cookie is scoped to staging's domain, which covers the web app and the api.
+      env {
+        name  = "API_URL"
+        value = "https://api.staging.bardery.app"
+      }
+
+      env {
+        name  = "COOKIE_DOMAIN"
+        value = "staging.bardery.app"
+      }
+
+      dynamic "env" {
+        for_each = local.api_secrets
+        content {
+          name        = env.value
+          secret_name = env.key
+        }
       }
 
       startup_probe {

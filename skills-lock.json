@@ -23,7 +23,7 @@
       "source": "albert-schilling/skills",
       "sourceType": "github",
       "skillPath": "skills/factory/SKILL.md",
-      "computedHash": "6dc800fa63761721e075783c30d4c6efeefc189c600a8cba7e54d0718235290d"
+      "computedHash": "607e55ee958fba6372b4050faf7dbc6b6951cc7bac120b7f4fdea77f87f31242"
     },
     "factory-pull-request": {
       "source": "albert-schilling/skills",
@@ -41,7 +41,7 @@
       "source": "albert-schilling/skills",
       "sourceType": "github",
       "skillPath": "skills/factory-setup/SKILL.md",
-      "computedHash": "74a8429d8de9953223d2b3d296b7384370d8718ce2e426faf2eeb0bf6d3d5d3d"
+      "computedHash": "274011d8cef5364bae7e52f9c01fc3f9197e69639efd1a6f920a95cbb5e4e8a1"
     },
     "git-guardrails-claude-code": {
       "source": "mattpocock/skills",

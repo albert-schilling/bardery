@@ -1,0 +1,49 @@
+@use "styles" as *;
+
+.sign-in-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  max-width: 24rem;
+  margin: 0 auto;
+  padding: var(--space-8) var(--space-4);
+}
+
+.sign-in-form__title {
+  margin: 0;
+  font-family: var(--font-display);
+}
+
+.sign-in-form__hint,
+.sign-in-form__error {
+  margin: 0;
+}
+
+.sign-in-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.sign-in-form__input {
+  padding: var(--space-2);
+  font: inherit;
+}
+
+.sign-in-form__submit,
+.sign-in-form__back {
+  padding: var(--space-2) var(--space-4);
+  font: inherit;
+}
+
+.sign-in-form__submit {
+  border: none;
+  background: var(--color-accent);
+  color: var(--color-ink);
+}
+
+.sign-in-form__back {
+  border: 1px solid var(--color-ink);
+  background: none;
+  color: var(--color-ink);
+}

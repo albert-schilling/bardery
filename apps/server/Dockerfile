@@ -6,14 +6,19 @@ FROM node:26.10.0-alpine@sha256:0b36e8c136b94cd4fcf02188228e76c31ad5872eef3fec8c
 WORKDIR /repo
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 # The pnpm version that `packageManager` in package.json pins; Node no longer ships Corepack.
-RUN npm install --global "$(node --print 'require("./package.json").packageManager')"
+# The optional `extra-ca` secret is a CA bundle for networks that re-sign TLS, such as a Claude Code
+# cloud session's egress gateway (test-image.sh passes NODE_EXTRA_CA_CERTS). As a secret it stays out
+# of every layer; without it, as in CI, Node ignores the missing file.
+RUN --mount=type=secret,id=extra-ca,required=false \
+  NODE_EXTRA_CA_CERTS=/run/secrets/extra-ca npm install --global "$(node --print 'require("./package.json").packageManager')"
 # The manifest comes before the source, so a change to the source alone reuses the cached install.
 COPY apps/server/package.json apps/server/
 COPY packages/shared/schemas/package.json packages/shared/schemas/
 # No install scripts: the root's `prepare` installs git hooks, and the server's dependencies need none.
 # The `...` also installs the workspace packages the server depends on; without it their own dependencies
 # are missing at build time and end up external to the bundle.
-RUN pnpm install --frozen-lockfile --ignore-scripts --filter "@bardery/server..."
+RUN --mount=type=secret,id=extra-ca,required=false \
+  NODE_EXTRA_CA_CERTS=/run/secrets/extra-ca pnpm install --frozen-lockfile --ignore-scripts --filter "@bardery/server..."
 COPY tsconfig.base.json ./
 COPY apps/server/ apps/server/
 COPY packages/shared/schemas/ packages/shared/schemas/

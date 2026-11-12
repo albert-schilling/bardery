@@ -15,7 +15,7 @@ Read the relevant source before you design anything; decisions are already made 
 
 ## Conventions
 
-`pnpm validate` runs what CI runs. A Stop hook runs it at the end of every Claude Code turn and keeps the turn going while it fails.
+`pnpm validate` runs what CI runs. A Stop hook runs it at the end of every Claude Code turn and keeps the turn going while it fails; when the next try fails the same way, the turn ends and shows the failure.
 
 - [`docs/conventions/tooling.md`](docs/conventions/tooling.md): commands, and tool behaviour that has surprised us. Read it before you run, configure or debug a tool.
 - [`docs/conventions/code.md`](docs/conventions/code.md): project layout, imports, config files, comments and TypeScript types. Read it before you write code or config.

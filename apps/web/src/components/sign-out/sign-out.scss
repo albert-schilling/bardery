@@ -1,0 +1,22 @@
+@use "styles" as *;
+
+.sign-out {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  align-items: center;
+  padding: 0 var(--space-4) var(--space-4);
+}
+
+.sign-out__email,
+.sign-out__error {
+  margin: 0;
+}
+
+.sign-out__button {
+  padding: var(--space-1) var(--space-4);
+  border: 1px solid var(--color-ink);
+  background: none;
+  color: var(--color-ink);
+  font: inherit;
+}
