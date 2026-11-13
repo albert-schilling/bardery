@@ -42,7 +42,8 @@ describe("the sign-in service", () => {
       expect.objectContaining({ to: "known@example.com", subject: "Your Bardery sign-in code" }),
     ]);
     expect(sent[0]?.text).toContain("Your sign-in code is 123456.");
-    expect(sent[0]?.text).toContain("5 minutes");
+    expect(sent[0]?.text).toContain("15 minutes");
+    expect(sent[0]?.text).toContain("only the newest works");
   });
 
   it("sends nothing to an email with no Account that may not create one", async () => {
