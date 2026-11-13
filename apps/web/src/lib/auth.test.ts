@@ -30,7 +30,11 @@ describe("createAuth", () => {
   });
 
   it.each([
-    [400, "INVALID_OTP", "That code isn't right. Check it and try again."],
+    [
+      400,
+      "INVALID_OTP",
+      "That code isn't right. Check it, and use the code from the newest email.",
+    ],
     [400, "OTP_EXPIRED", "That code no longer works. Send a new one."],
     [403, "TOO_MANY_ATTEMPTS", "That code no longer works. Send a new one."],
     [429, undefined, "Too many tries. Wait a while, then try again."],

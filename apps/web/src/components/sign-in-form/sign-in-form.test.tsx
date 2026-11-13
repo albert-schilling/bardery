@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { createRoutesStub } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Auth } from "~/lib/auth";
 import { fakeAuth, withMockApi } from "~/lib/test-api";
@@ -19,7 +19,25 @@ function type(label: string, value: string) {
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 }
 
+/** A time today, as the form shows it in the test's locale and time zone. */
+function at(hours: number, minutes: number): string {
+  return new Date(2026, 10, 13, hours, minutes).toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 describe("SignInForm", () => {
+  beforeEach(() => {
+    // Only the clock: the queries' own timers stay real.
+    vi.useFakeTimers({ toFake: ["Date"] });
+    vi.setSystemTime(new Date(2026, 10, 13, 10, 52));
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it("emails a code, signs in with it, and goes to the home page", async () => {
     const sendCode = vi.fn(async () => {});
     const signIn = vi.fn(async () => {});
@@ -27,7 +45,9 @@ describe("SignInForm", () => {
 
     type("Email", "parent@example.com");
     fireEvent.click(screen.getByRole("button", { name: "Send code" }));
-    expect(await screen.findByText("We emailed a code to parent@example.com.")).toBeInTheDocument();
+    expect(await screen.findByRole("status")).toHaveTextContent(
+      `We emailed a code to parent@example.com at ${at(10, 52)}. It works until ${at(11, 7)}.`,
+    );
     type("Code", "123456");
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
 
@@ -51,7 +71,7 @@ describe("SignInForm", () => {
 
   it("says why a code failed, and lets them start again with another email", async () => {
     const signIn = async () => {
-      throw new Error("That code isn't right. Check it and try again.");
+      throw new Error("That code isn't right. Check it, and use the code from the newest email.");
     };
     renderForm(fakeAuth({ signIn }));
     type("Email", "parent@example.com");
@@ -79,13 +99,14 @@ describe("SignInForm", () => {
     type("Code", "000000");
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
     await screen.findByRole("alert");
+    vi.setSystemTime(new Date(2026, 10, 13, 10, 58));
 
     fireEvent.click(screen.getByRole("button", { name: "Send a new code" }));
 
-    expect(await screen.findByText("We emailed a new code to parent@example.com.")).toHaveAttribute(
-      "role",
-      "status",
+    expect(await screen.findByText(/We emailed a new code/)).toHaveTextContent(
+      `We emailed a new code to parent@example.com at ${at(10, 58)}. It works until ${at(11, 13)}, and earlier codes no longer do.`,
     );
+    expect(screen.getByRole("status")).toHaveTextContent(/new code/);
     expect(sendCode).toHaveBeenCalledTimes(2);
     expect(sendCode).toHaveBeenLastCalledWith("parent@example.com");
     expect(screen.getByLabelText("Code")).toHaveValue("");
@@ -105,7 +126,9 @@ describe("SignInForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send a new code" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Too many tries.");
-    expect(screen.getByText("We emailed a code to parent@example.com.")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toHaveTextContent(
+      /^We emailed a code to parent@example.com/,
+    );
 
     fireEvent.click(screen.getByRole("button", { name: "Use another email" }));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
