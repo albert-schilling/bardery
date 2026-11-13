@@ -37,9 +37,8 @@ resource "azurerm_monitor_diagnostic_setting" "communication" {
   target_resource_id         = azurerm_communication_service.staging.id
   log_analytics_workspace_id = azurerm_log_analytics_workspace.staging.id
 
-  # Resource-specific tables (ACSEmail…). If a plan keeps showing this argument changing, remove it: for
-  # some resource types Azure does not store it, and the provider then plans the change on every run.
-  log_analytics_destination_type = "Dedicated"
+  # No log_analytics_destination_type: Azure writes these logs to their own ACSEmail… tables anyway, and
+  # doesn't store the setting for this resource, so every plan showed it changing back to "Dedicated".
 
   enabled_log {
     category = "EmailSendMailOperational"
