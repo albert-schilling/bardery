@@ -1,5 +1,7 @@
 # Bardery
 
+> This file used to be called `CONTEXT.md`. Older links and records still use that name.
+
 An interactive storytelling app where AI writes and illustrates a story and the reader decides how it continues.
 
 ## Language

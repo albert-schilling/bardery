@@ -2,7 +2,7 @@
   "$schema": "skills/factory/factory.schema.json",
   "codingAgent": "claude-code",
   "conventions": "AGENTS.md",
-  "glossary": "CONTEXT.md",
+  "glossary": "GLOSSARY.md",
   "decisionRecords": ["docs/adr/", "docs/grilling/", "docs/prd/"],
   "issueTemplate": ".github/ISSUE_TEMPLATE/task.md",
   "setup": "pnpm install",
