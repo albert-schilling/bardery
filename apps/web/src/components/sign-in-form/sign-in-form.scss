@@ -47,3 +47,10 @@
   background: none;
   color: var(--color-ink);
 }
+
+// Busy while a request is out: dimmed, so the change from the ready state shows.
+.sign-in-form__submit:disabled,
+.sign-in-form__back:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}

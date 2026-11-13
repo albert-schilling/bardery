@@ -62,6 +62,13 @@ export function SignInForm() {
     sendCode.reset();
   }
 
+  // One request at a time: a new code sent while signing in would replace the code being checked.
+  const busy = sendCode.isPending || signIn.isPending;
+  // What the busy button says, repeated in a live region so screen readers announce it too.
+  let pendingLabel = "";
+  if (signIn.isPending) pendingLabel = "Signing in…";
+  else if (sendCode.isPending) pendingLabel = codeSent ? "Sending a new code…" : "Sending code…";
+
   // On the code step, sending a new code can fail too.
   const error = codeSent ? (signIn.error ?? sendCode.error) : sendCode.error;
   return (
@@ -89,16 +96,16 @@ export function SignInForm() {
               required
             />
           </label>
-          <button className="sign-in-form__submit" disabled={signIn.isPending}>
-            Sign in
+          <button className="sign-in-form__submit" disabled={busy}>
+            {signIn.isPending ? pendingLabel : "Sign in"}
           </button>
           <button
             className="sign-in-form__back"
             type="button"
             onClick={sendNewCode}
-            disabled={sendCode.isPending}
+            disabled={busy}
           >
-            Send a new code
+            {sendCode.isPending ? pendingLabel : "Send a new code"}
           </button>
           <button className="sign-in-form__back" type="button" onClick={useAnotherEmail}>
             Use another email
@@ -117,11 +124,14 @@ export function SignInForm() {
               required
             />
           </label>
-          <button className="sign-in-form__submit" disabled={sendCode.isPending}>
-            Send code
+          <button className="sign-in-form__submit" disabled={busy}>
+            {sendCode.isPending ? pendingLabel : "Send code"}
           </button>
         </>
       )}
+      <p className="visually-hidden" role="status">
+        {pendingLabel}
+      </p>
       {error !== null && (
         <p className="sign-in-form__error" role="alert">
           {error.message}
