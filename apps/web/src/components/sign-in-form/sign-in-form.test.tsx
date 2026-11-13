@@ -15,6 +15,20 @@ function renderForm(auth: Auth) {
   render(<Stub initialEntries={["/sign-in"]} />, { wrapper: withMockApi({}, auth) });
 }
 
+/** A call that stays pending until the test finishes it. */
+function pending() {
+  let finish = () => {};
+  const promise = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  return { call: vi.fn(() => promise), finish };
+}
+
+/** The live region that announces what the busy button says; empty while nothing is pending. */
+function announcement() {
+  return screen.getAllByRole("status").find((each) => each.classList.contains("visually-hidden"));
+}
+
 function type(label: string, value: string) {
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 }
@@ -45,7 +59,7 @@ describe("SignInForm", () => {
 
     type("Email", "parent@example.com");
     fireEvent.click(screen.getByRole("button", { name: "Send code" }));
-    expect(await screen.findByRole("status")).toHaveTextContent(
+    expect(await screen.findByText(/^We emailed a code/)).toHaveTextContent(
       `We emailed a code to parent@example.com at ${at(10, 52)}. It works until ${at(11, 7)}.`,
     );
     type("Code", "123456");
@@ -106,7 +120,7 @@ describe("SignInForm", () => {
     expect(await screen.findByText(/We emailed a new code/)).toHaveTextContent(
       `We emailed a new code to parent@example.com at ${at(10, 58)}. It works until ${at(11, 13)}, and earlier codes no longer do.`,
     );
-    expect(screen.getByRole("status")).toHaveTextContent(/new code/);
+    expect(screen.getByText(/^We emailed a new code/)).toHaveAttribute("role", "status");
     expect(sendCode).toHaveBeenCalledTimes(2);
     expect(sendCode).toHaveBeenLastCalledWith("parent@example.com");
     expect(screen.getByLabelText("Code")).toHaveValue("");
@@ -126,11 +140,67 @@ describe("SignInForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Send a new code" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Too many tries.");
-    expect(screen.getByRole("status")).toHaveTextContent(
+    expect(screen.getByText(/^We emailed a code/)).toHaveTextContent(
       /^We emailed a code to parent@example.com/,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Use another email" }));
     expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("disables the button and says so while a code is being sent", async () => {
+    const sendCode = pending();
+    renderForm(fakeAuth({ sendCode: sendCode.call }));
+    type("Email", "parent@example.com");
+
+    fireEvent.click(screen.getByRole("button", { name: "Send code" }));
+
+    expect(await screen.findByRole("button", { name: "Sending code…" })).toBeDisabled();
+    expect(announcement()).toHaveTextContent("Sending code…");
+
+    sendCode.finish();
+
+    expect(await screen.findByLabelText("Code")).toBeInTheDocument();
+    expect(announcement()).toHaveTextContent("");
+  });
+
+  it("disables both code-step buttons while signing in", async () => {
+    const signIn = pending();
+    renderForm(fakeAuth({ signIn: signIn.call }));
+    type("Email", "parent@example.com");
+    fireEvent.click(screen.getByRole("button", { name: "Send code" }));
+    await screen.findByLabelText("Code");
+    type("Code", "123456");
+
+    fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
+    expect(await screen.findByRole("button", { name: "Signing in…" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Send a new code" })).toBeDisabled();
+    expect(announcement()).toHaveTextContent("Signing in…");
+
+    signIn.finish();
+    expect(await screen.findByText("The home page")).toBeInTheDocument();
+  });
+
+  it("disables both code-step buttons while a new code is being sent", async () => {
+    const resend = pending();
+    const sendCode = vi
+      .fn<(email: string) => Promise<void>>()
+      .mockResolvedValueOnce()
+      .mockImplementationOnce(resend.call);
+    renderForm(fakeAuth({ sendCode }));
+    type("Email", "parent@example.com");
+    fireEvent.click(screen.getByRole("button", { name: "Send code" }));
+    await screen.findByLabelText("Code");
+
+    fireEvent.click(screen.getByRole("button", { name: "Send a new code" }));
+
+    expect(await screen.findByRole("button", { name: "Sending a new code…" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeDisabled();
+    expect(announcement()).toHaveTextContent("Sending a new code…");
+
+    resend.finish();
+    expect(await screen.findByRole("button", { name: "Send a new code" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Sign in" })).toBeEnabled();
   });
 });
