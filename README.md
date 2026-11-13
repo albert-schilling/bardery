@@ -39,7 +39,7 @@ To sign in, start the api with your email on the allowlist (`SIGN_UP_ALLOWLIST=y
 
 ## Documentation
 
-- [`CONTEXT.md`](CONTEXT.md): the domain glossary.
+- [`GLOSSARY.md`](GLOSSARY.md): the domain glossary.
 - [`docs/adr/`](docs/adr/): architecture decision records.
 - [`docs/grilling/`](docs/grilling/): the design sessions behind the product and technical decisions.
 - [`docs/design/`](docs/design/): the UI prototype.
