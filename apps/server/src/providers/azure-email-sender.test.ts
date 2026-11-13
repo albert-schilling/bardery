@@ -29,12 +29,47 @@ describe("the Azure email sender", () => {
     );
   });
 
-  it("gives the request and the polling a deadline, so a send that never finishes fails", async () => {
-    const { client, beginSend, pollUntilDone } = clientWith({ status: "Succeeded" });
-    await createAzureEmailSender({ client, from: "a@b.c", timeoutMs: 50 }).send(email);
-    const requestSignal: AbortSignal = beginSend.mock.calls[0]?.[1].abortSignal;
-    const pollSignal: AbortSignal = pollUntilDone.mock.calls[0]?.[0].abortSignal;
-    expect(requestSignal).toBe(pollSignal);
-    await vi.waitFor(() => expect(requestSignal.aborted).toBe(true));
+  it("names the operation and its last status when Azure accepts the email but doesn't finish", async () => {
+    // Azure answers the send with an operation that stays `Running`; the poll ends only on abort.
+    const beginSend = vi.fn(async (_message, options) => {
+      options.onResponse({ parsedBody: { id: "op-1", status: "Running" } });
+      return {
+        pollUntilDone: ({ abortSignal }: { abortSignal: AbortSignal }) =>
+          new Promise((_resolve, reject) =>
+            abortSignal.addEventListener("abort", () =>
+              reject(new Error("The delay was aborted.")),
+            ),
+          ),
+      };
+    });
+    const sender = createAzureEmailSender({
+      client: { beginSend } as never,
+      from: "a@b.c",
+      timeoutMs: 50,
+    });
+
+    await expect(sender.send(email)).rejects.toThrow(
+      "Azure accepted the email (operation op-1) but hadn't sent it after 0.05 s; its last status was Running.",
+    );
+  });
+
+  it("says Azure never accepted the email when the send request itself times out", async () => {
+    const beginSend = vi.fn(
+      (_message, { abortSignal }: { abortSignal: AbortSignal }) =>
+        new Promise((_resolve, reject) =>
+          abortSignal.addEventListener("abort", () =>
+            reject(new Error("The operation was aborted.")),
+          ),
+        ),
+    );
+    const sender = createAzureEmailSender({
+      client: { beginSend } as never,
+      from: "a@b.c",
+      timeoutMs: 50,
+    });
+
+    await expect(sender.send(email)).rejects.toThrow(
+      "Azure hadn't accepted the email after 0.05 s.",
+    );
   });
 });
