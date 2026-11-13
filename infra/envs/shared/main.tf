@@ -48,7 +48,7 @@ resource "azurerm_dns_txt_record" "apex" {
   }
 }
 
-# Also covers subdomains, so ACS mail from mail.bardery.app must pass DKIM or SPF alignment.
+# Covers subdomains too, by the standard; mail.bardery.app also has its own record (mail_dmarc below).
 resource "azurerm_dns_txt_record" "dmarc" {
   name                = "_dmarc"
   zone_name           = azurerm_dns_zone.bardery.name
@@ -150,4 +150,18 @@ resource "azurerm_dns_cname_record" "mail_dkim2" {
   resource_group_name = azurerm_resource_group.shared.name
   ttl                 = local.mail_verification.dkim2[0].ttl
   record              = local.mail_verification.dkim2[0].value
+}
+
+# The sending domain's own DMARC policy, the same as the apex's. The apex record should cover it, but
+# a receiver that doesn't look up the parent domain finds no policy: Posteo reported `dmarc=none` for
+# mail from mail.bardery.app while the apex had `p=quarantine`.
+resource "azurerm_dns_txt_record" "mail_dmarc" {
+  name                = "_dmarc.mail"
+  zone_name           = azurerm_dns_zone.bardery.name
+  resource_group_name = azurerm_resource_group.shared.name
+  ttl                 = 3600
+
+  record {
+    value = "v=DMARC1; p=quarantine"
+  }
 }
