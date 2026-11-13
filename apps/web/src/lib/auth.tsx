@@ -16,7 +16,7 @@ function messageFor(error: { code?: string | undefined; status: number }): strin
   if (error.status === 429) return "Too many tries. Wait a while, then try again.";
   switch (error.code) {
     case "INVALID_OTP":
-      return "That code isn't right. Check it and try again.";
+      return "That code isn't right. Check it, and use the code from the newest email.";
     case "OTP_EXPIRED":
     case "TOO_MANY_ATTEMPTS":
       return "That code no longer works. Send a new one.";

@@ -25,18 +25,37 @@ export function createAzureEmailSender({
       // One deadline for the request and the polling: a hung token request or a send that never
       // leaves `Running` becomes an error, not a command that waits forever.
       const abortSignal = AbortSignal.timeout(timeoutMs);
-      const poller = await client.beginSend(
-        {
-          senderAddress: from,
-          recipients: { to: [{ address: to }] },
-          content: { subject, plainText: text },
-        },
-        { abortSignal },
-      );
-      const result = await poller.pollUntilDone({ abortSignal });
-      if (result.status !== "Succeeded") {
+      // Azure's latest answer, from the send request and each poll after it, so a timeout can say
+      // which operation it gave up on and where that operation was.
+      let operation: { id?: string; status?: string } | undefined;
+      try {
+        const poller = await client.beginSend(
+          {
+            senderAddress: from,
+            recipients: { to: [{ address: to }] },
+            content: { subject, plainText: text },
+          },
+          {
+            abortSignal,
+            onResponse: (response) => {
+              operation = response.parsedBody as typeof operation;
+            },
+          },
+        );
+        const result = await poller.pollUntilDone({ abortSignal });
+        if (result.status !== "Succeeded") {
+          throw new Error(
+            `Azure did not send the email: ${result.status} ${result.error?.message ?? ""}`.trim(),
+          );
+        }
+      } catch (error) {
+        if (!abortSignal.aborted) throw error;
+        // Azure may still send it: the operation goes on without us.
         throw new Error(
-          `Azure did not send the email: ${result.status} ${result.error?.message ?? ""}`.trim(),
+          operation?.id === undefined
+            ? `Azure hadn't accepted the email after ${timeoutMs / 1000} s.`
+            : `Azure accepted the email (operation ${operation.id}) but hadn't sent it after ${timeoutMs / 1000} s; its last status was ${operation.status ?? "unknown"}.`,
+          { cause: error },
         );
       }
     },

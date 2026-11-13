@@ -1,8 +1,8 @@
+import { signInCodeLifetimeMinutes } from "@bardery/schemas";
+
 import type { AccountRepository } from "~/repositories/accounts";
 import type { SignInCodeRequestRepository } from "~/repositories/sign-in-code-requests";
 import type { EmailSender } from "~/providers/email-sender";
-
-export const signInCodeLifetimeMinutes = 5;
 
 // Each code allows a few attempts, so this also bounds how fast an address's codes can be guessed.
 const maxCodesPerHour = 5;
@@ -36,6 +36,7 @@ export function createSignInService(deps: {
         text: [
           `Your sign-in code is ${code}.`,
           `It works once, for ${signInCodeLifetimeMinutes} minutes.`,
+          "If you asked for more than one code, only the newest works.",
           "If you didn't ask for it, you can ignore this email.",
         ].join("\n\n"),
       });

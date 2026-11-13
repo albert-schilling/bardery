@@ -1,3 +1,4 @@
+import { signInCodeLifetimeMinutes } from "@bardery/schemas";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { APIError, createAuthMiddleware } from "better-auth/api";
@@ -6,7 +7,7 @@ import { emailOTP } from "better-auth/plugins";
 import type { Config } from "~/config";
 import type { Database } from "~/db/client";
 import * as schema from "~/db/schema";
-import { type SignInService, signInCodeLifetimeMinutes } from "~/services/sign-in";
+import type { SignInService } from "~/services/sign-in";
 
 // Signs cookies only on a developer's machine: a deployed server refuses to start without its own.
 const developmentSecret = "bardery-development-secret-not-for-deployment";
